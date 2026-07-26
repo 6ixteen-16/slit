@@ -11,13 +11,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_light/providers/system_provider.dart';
 import 'package:smart_light/utils/constants.dart';
+import 'package:smart_light/widgets/connection_status.dart';
 import 'package:smart_light/widgets/sensor_card.dart';
 import 'package:smart_light/widgets/brightness_card.dart';
 import 'package:smart_light/widgets/state_indicator.dart';
-import 'package:smart_light/widgets/connection_status.dart';
 import 'package:smart_light/widgets/animated_light.dart';
 import 'package:smart_light/widgets/thingspeak_status.dart';
-import 'package:smart_light/widgets/radial_menu.dart';
 import 'package:intl/intl.dart';
 
 /// Dashboard Screen
@@ -31,6 +30,8 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  int _selectedIndex = 0;
+
   @override
   void initState() {
     super.initState();
@@ -326,27 +327,58 @@ class _DashboardScreenState extends State<DashboardScreen> {
           );
         },
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: RadialMenu(
-        items: [
-          RadialMenuItem(
-            icon: Icons.monitor_heart,
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: (index) async {
+          if (index == 0) return;
+          setState(() {
+            _selectedIndex = index;
+          });
+          await _navigateToScreen(index);
+          if (mounted) {
+            setState(() {
+              _selectedIndex = 0;
+            });
+          }
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.dashboard),
+            label: 'Dashboard',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.monitor_heart),
             label: 'Monitor',
-            onTap: () => Navigator.pushNamed(context, '/monitor'),
           ),
-          RadialMenuItem(
-            icon: Icons.touch_app,
+          NavigationDestination(
+            icon: Icon(Icons.touch_app),
             label: 'Control',
-            onTap: () => Navigator.pushNamed(context, '/manual'),
           ),
-          RadialMenuItem(
-            icon: Icons.settings,
+          NavigationDestination(
+            icon: Icon(Icons.settings),
             label: 'Settings',
-            onTap: () => Navigator.pushNamed(context, '/settings'),
           ),
         ],
       ),
     );
+  }
+
+  /// Navigate to screen based on index
+  Future<void> _navigateToScreen(int index) async {
+    switch (index) {
+      case 0:
+        // Already on dashboard
+        break;
+      case 1:
+        await Navigator.pushNamed(context, '/monitor');
+        break;
+      case 2:
+        await Navigator.pushNamed(context, '/manual');
+        break;
+      case 3:
+        await Navigator.pushNamed(context, '/settings');
+        break;
+    }
   }
 
   /// Format time for display
