@@ -17,6 +17,7 @@ import 'package:smart_light/widgets/state_indicator.dart';
 import 'package:smart_light/widgets/connection_status.dart';
 import 'package:smart_light/widgets/animated_light.dart';
 import 'package:smart_light/widgets/thingspeak_status.dart';
+import 'package:smart_light/widgets/radial_menu.dart';
 import 'package:intl/intl.dart';
 
 /// Dashboard Screen
@@ -30,8 +31,6 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  int _selectedIndex = 0;
-
   @override
   void initState() {
     super.initState();
@@ -61,6 +60,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
         actions: [
           Consumer<SystemProvider>(
             builder: (context, provider, child) {
+              if (provider.isLoadingStatus) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                  child: Center(
+                    child: SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+          Consumer<SystemProvider>(
+            builder: (context, provider, child) {
               return const Padding(
                 padding: EdgeInsets.only(right: AppSpacing.sm),
                 child: ThingSpeakStatusWidget(compact: true),
@@ -82,12 +101,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       body: Consumer<SystemProvider>(
         builder: (context, provider, child) {
-          if (provider.isLoadingStatus) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-
           final status = provider.systemStatus;
 
           return RefreshIndicator(
@@ -313,52 +326,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
           );
         },
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-          _navigateToScreen(index);
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.dashboard),
-            label: 'Dashboard',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.monitor_heart),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: RadialMenu(
+        items: [
+          RadialMenuItem(
+            icon: Icons.monitor_heart,
             label: 'Monitor',
+            onTap: () => Navigator.pushNamed(context, '/monitor'),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.touch_app),
+          RadialMenuItem(
+            icon: Icons.touch_app,
             label: 'Control',
+            onTap: () => Navigator.pushNamed(context, '/manual'),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.settings),
+          RadialMenuItem(
+            icon: Icons.settings,
             label: 'Settings',
+            onTap: () => Navigator.pushNamed(context, '/settings'),
           ),
         ],
       ),
     );
-  }
-
-  /// Navigate to screen based on index
-  void _navigateToScreen(int index) {
-    switch (index) {
-      case 0:
-        // Already on dashboard
-        break;
-      case 1:
-        Navigator.pushNamed(context, '/monitor');
-        break;
-      case 2:
-        Navigator.pushNamed(context, '/manual');
-        break;
-      case 3:
-        Navigator.pushNamed(context, '/settings');
-        break;
-    }
   }
 
   /// Format time for display

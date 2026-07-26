@@ -33,22 +33,19 @@ class AppColors {
   AppColors._();
 
   // ─── Primary ─────────────────────────────────────────────────────────────
-  // Vivid blue – clearly visible on both white and dark card surfaces.
-  static const Color primary      = Color(0xFF1A56DB);
-  static const Color primaryLight = Color(0xFF3B82F6);
-  static const Color primaryDark  = Color(0xFF1E40AF);
+  static const Color primary      = Color(0xFF003152);
+  static const Color primaryLight = Color(0xFF004A7A);
+  static const Color primaryDark  = Color(0xFF001B2E);
 
   // ─── Accent ──────────────────────────────────────────────────────────────
-  // Warm amber – maximum contrast on light AND dark surfaces; used for
-  // OutlinedButton borders, slider thumbs, active indicators.
-  static const Color accent      = Color(0xFFF59E0B);
-  static const Color accentLight = Color(0xFFFBBF24);
-  static const Color accentDark  = Color(0xFFD97706);
+  static const Color accent      = Color(0xFF00E5FF);
+  static const Color accentLight = Color(0xFF66EBFF);
+  static const Color accentDark  = Color(0xFF0099AA);
 
   // ─── Secondary ───────────────────────────────────────────────────────────
-  static const Color secondary      = Color(0xFF0EA5E9);
-  static const Color secondaryLight = Color(0xFF38BDF8);
-  static const Color secondaryDark  = Color(0xFF0284C7);
+  static const Color secondary      = Color(0xFFADDFF1);
+  static const Color secondaryLight = Color(0xFFD6F0FA);
+  static const Color secondaryDark  = Color(0xFF7EC8E0);
 
   // ─── Semantic ────────────────────────────────────────────────────────────
   static const Color success      = Color(0xFF22C55E);
@@ -64,10 +61,9 @@ class AppColors {
   static const Color errorDark  = Color(0xFFDC2626);
 
   // ─── Light theme surfaces ─────────────────────────────────────────────────
-  // Pure-white cards → navy/amber buttons always visible. No more ice-blue clash.
-  static const Color background     = Color(0xFFF1F5F9);
-  static const Color surface        = Color(0xFFFFFFFF);
-  static const Color cardBackground = Color(0xFFFFFFFF);
+  static const Color background     = Color(0xFFF6FAFC);
+  static const Color surface        = Color(0xFFADDFF1);
+  static const Color cardBackground = Color(0xFFADDFF1);
 
   // ─── Light theme text ────────────────────────────────────────────────────
   static const Color textPrimary   = Color(0xFF0F172A);
@@ -75,15 +71,15 @@ class AppColors {
   static const Color textDisabled  = Color(0xFF94A3B8);
 
   // ─── Dark theme surfaces ──────────────────────────────────────────────────
-  // Each layer is visibly lighter than the previous so cards, inputs, and
-  // buttons always have clear contrast separation.
-  static const Color darkBackground     = Color(0xFF0B1120);
-  static const Color darkSurface        = Color(0xFF111827);
-  static const Color darkCardBackground = Color(0xFF1C2B40);
+  // Fix for invisible buttons: Background and Cards are now slightly darker 
+  // than the Primary color (#003152) so buttons stand out clearly.
+  static const Color darkBackground     = Color(0xFF001220);
+  static const Color darkSurface        = Color(0xFF001B2E);
+  static const Color darkCardBackground = Color(0xFF00223A);
 
   // ─── Dark theme text ─────────────────────────────────────────────────────
-  static const Color darkTextPrimary   = Color(0xFFF1F5F9);
-  static const Color darkTextSecondary = Color(0xFF94A3B8);
+  static const Color darkTextPrimary   = Color(0xFFFFFFFF);
+  static const Color darkTextSecondary = Color(0xFFADDFF1);
 }
 
 /// Typography

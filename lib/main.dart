@@ -85,7 +85,7 @@ class SmartLightApp extends StatelessWidget {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primary,
-          side: const BorderSide(color: AppColors.accent, width: 2),
+          side: const BorderSide(color: AppColors.primary, width: 2),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppBorderRadius.card),
           ),
