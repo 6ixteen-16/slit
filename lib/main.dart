@@ -35,14 +35,18 @@ class SmartLightApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => SystemProvider(),
-      child: MaterialApp(
-        title: appName,
-        debugShowCheckedModeBanner: false,
-        theme: _buildLightTheme(),
-        darkTheme: _buildDarkTheme(),
-        themeMode: provider.themeMode,
-        initialRoute: '/',
-        routes: _buildRoutes(),
+      child: Consumer<SystemProvider>(
+        builder: (context, provider, child) {
+          return MaterialApp(
+            title: appName,
+            debugShowCheckedModeBanner: false,
+            theme: _buildLightTheme(),
+            darkTheme: _buildDarkTheme(),
+            themeMode: provider.themeMode,
+            initialRoute: '/',
+            routes: _buildRoutes(),
+          );
+        },
       ),
     );
   }
