@@ -8,7 +8,7 @@
 library;
 
 import 'dart:async';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:smart_light/models/system_status.dart';
 import 'package:smart_light/models/event_log.dart';
 import 'package:smart_light/models/settings.dart';
