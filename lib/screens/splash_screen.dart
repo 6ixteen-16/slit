@@ -97,23 +97,37 @@ class _SplashScreenState extends State<SplashScreen>
                   children: [
                     // Logo/Icon
                     Container(
-                      width: 120,
-                      height: 120,
+                      width: 140,
+                      height: 140,
                       decoration: BoxDecoration(
                         color: AppColors.primary,
                         borderRadius: BorderRadius.circular(AppBorderRadius.xl),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.3),
-                            blurRadius: 20,
-                            spreadRadius: 5,
+                            color: AppColors.primary.withValues(alpha: 0.4),
+                            blurRadius: 30,
+                            spreadRadius: 8,
+                          ),
+                          BoxShadow(
+                            color: AppColors.accent.withValues(alpha: 0.15),
+                            blurRadius: 50,
+                            spreadRadius: 10,
                           ),
                         ],
                       ),
-                      child: const Icon(
-                        Icons.lightbulb,
-                        size: 64,
-                        color: Colors.white,
+                      child: Padding(
+                        padding: const EdgeInsets.all(22.0),
+                        child: Image.asset(
+                          'assets/images/app_icon.png',
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Icon(
+                              Icons.bolt,
+                              size: 64,
+                              color: Colors.white,
+                            );
+                          },
+                        ),
                       ),
                     ),
                     const SizedBox(height: AppSpacing.lg),

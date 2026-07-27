@@ -18,6 +18,9 @@ import 'package:smart_light/widgets/state_indicator.dart';
 import 'package:smart_light/widgets/animated_light.dart';
 import 'package:smart_light/widgets/thingspeak_status.dart';
 import 'package:intl/intl.dart';
+import 'package:smart_light/screens/live_monitor_screen.dart';
+import 'package:smart_light/screens/manual_control_screen.dart';
+import 'package:smart_light/screens/settings_screen.dart';
 
 /// Dashboard Screen
 /// 
@@ -32,6 +35,59 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
 
+  void _onTabSelected(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: [
+          _DashboardContent(onTabSelected: _onTabSelected),
+          const LiveMonitorScreen(),
+          const ManualControlScreen(),
+          const SettingsScreen(),
+        ],
+      ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: _onTabSelected,
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.dashboard),
+            label: 'Dashboard',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.monitor_heart),
+            label: 'Monitor',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.touch_app),
+            label: 'Control',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings),
+            label: 'Settings',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DashboardContent extends StatefulWidget {
+  final Function(int) onTabSelected;
+  const _DashboardContent({required this.onTabSelected});
+
+  @override
+  State<_DashboardContent> createState() => _DashboardContentState();
+}
+
+class _DashboardContentState extends State<_DashboardContent> {
   @override
   void initState() {
     super.initState();
@@ -59,6 +115,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         title: const Text(appName),
         elevation: 0,
         actions: [
+          IconButton(
+            icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
+            onPressed: () {
+              Provider.of<SystemProvider>(context, listen: false).toggleTheme();
+            },
+          ),
           Consumer<SystemProvider>(
             builder: (context, provider, child) {
               if (provider.isLoadingStatus) {
@@ -257,7 +319,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           icon: Icons.monitor_heart,
                           label: 'Live Monitor',
                           onTap: () {
-                            Navigator.pushNamed(context, '/monitor');
+                            widget.onTabSelected(1);
                           },
                         ),
                       ),
@@ -267,7 +329,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           icon: Icons.touch_app,
                           label: 'Manual Control',
                           onTap: () {
-                            Navigator.pushNamed(context, '/manual');
+                            widget.onTabSelected(2);
                           },
                         ),
                       ),
@@ -281,7 +343,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           icon: Icons.settings,
                           label: 'Settings',
                           onTap: () {
-                            Navigator.pushNamed(context, '/settings');
+                            widget.onTabSelected(3);
                           },
                         ),
                       ),
@@ -327,58 +389,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           );
         },
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) async {
-          if (index == 0) return;
-          setState(() {
-            _selectedIndex = index;
-          });
-          await _navigateToScreen(index);
-          if (mounted) {
-            setState(() {
-              _selectedIndex = 0;
-            });
-          }
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.dashboard),
-            label: 'Dashboard',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.monitor_heart),
-            label: 'Monitor',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.touch_app),
-            label: 'Control',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
-          ),
-        ],
-      ),
     );
-  }
-
-  /// Navigate to screen based on index
-  Future<void> _navigateToScreen(int index) async {
-    switch (index) {
-      case 0:
-        // Already on dashboard
-        break;
-      case 1:
-        await Navigator.pushNamed(context, '/monitor');
-        break;
-      case 2:
-        await Navigator.pushNamed(context, '/manual');
-        break;
-      case 3:
-        await Navigator.pushNamed(context, '/settings');
-        break;
-    }
   }
 
   /// Format time for display

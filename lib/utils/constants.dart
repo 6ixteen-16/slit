@@ -61,9 +61,9 @@ class AppColors {
   static const Color errorDark  = Color(0xFFDC2626);
 
   // ─── Light theme surfaces ─────────────────────────────────────────────────
-  static const Color background     = Color(0xFFF6FAFC);
-  static const Color surface        = Color(0xFFADDFF1);
-  static const Color cardBackground = Color(0xFFADDFF1);
+  static const Color background     = Color(0xFFFFFFFF);
+  static const Color surface        = Color(0xFFFFFFFF);
+  static const Color cardBackground = Color(0xFFFFFFFF);
 
   // ─── Light theme text ────────────────────────────────────────────────────
   static const Color textPrimary   = Color(0xFF0F172A);

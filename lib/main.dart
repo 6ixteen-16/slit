@@ -40,7 +40,7 @@ class SmartLightApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: _buildLightTheme(),
         darkTheme: _buildDarkTheme(),
-        themeMode: ThemeMode.system,
+        themeMode: provider.themeMode,
         initialRoute: '/',
         routes: _buildRoutes(),
       ),

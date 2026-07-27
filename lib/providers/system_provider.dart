@@ -60,6 +60,9 @@ class SystemProvider with ChangeNotifier {
   // refresh never makes a newly selected manual mode look like auto mode.
   String _lastConfirmedMode = 'auto';
 
+  // Theme state
+  ThemeMode _themeMode = ThemeMode.system;
+
   // Loading states
   bool _isLoadingStatus = false;
   bool _isLoadingLogs = false;
@@ -92,6 +95,9 @@ class SystemProvider with ChangeNotifier {
 
   /// Error message (if any)
   String? get errorMessage => _errorMessage;
+
+  /// Theme mode
+  ThemeMode get themeMode => _themeMode;
 
   /// Loading states
   bool get isLoadingStatus => _isLoadingStatus;
@@ -706,6 +712,19 @@ class SystemProvider with ChangeNotifier {
       'presence_events': presenceCount,
       'energy_saving_time': energySavingTime,
     };
+  }
+
+  /// Toggle Theme Mode
+  void toggleTheme() {
+    if (_themeMode == ThemeMode.light) {
+      _themeMode = ThemeMode.dark;
+    } else if (_themeMode == ThemeMode.dark) {
+      _themeMode = ThemeMode.light;
+    } else {
+      // If system, switch to the opposite of current system brightness (we don't have direct access here easily, so we just default to dark if toggled from system)
+      _themeMode = ThemeMode.dark;
+    }
+    notifyListeners();
   }
 
   @override
