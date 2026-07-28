@@ -257,7 +257,7 @@ class ThingSpeakStatusWidget extends StatelessWidget {
       return 'No internet connection';
     }
     if (isConnected) {
-      return 'Receiving live data from cloud';
+      return 'Receiving data from cloud';
     }
     return 'Attempting to connect...';
   }

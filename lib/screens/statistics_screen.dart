@@ -88,7 +88,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       ),
       body: Consumer<SystemProvider>(
         builder: (context, provider, child) {
-          if (provider.isLoadingStatistics) {
+          if (provider.isLoadingStatistics && provider.statistics.isEmpty) {
             return const Center(
               child: CircularProgressIndicator(),
             );

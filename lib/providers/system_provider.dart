@@ -233,7 +233,7 @@ class SystemProvider with ChangeNotifier {
       await refreshHistory(results: 100);
       final feeds = _thingSpeakHistory?.feeds ?? const <ThingSpeakFeed>[];
       _eventLogs = _generateLogsFromThingSpeak(feeds);
-      _statistics = _calculateStatisticsFromThingSpeak(feeds);
+      // _statistics = _calculateStatisticsFromThingSpeak(feeds); // Removed to preserve time-range filter
       notifyListeners();
     } else {
       await Future.wait([refreshLogs(), refreshStatistics()]);
@@ -258,11 +258,12 @@ class SystemProvider with ChangeNotifier {
         final statusMap = _thingSpeakFeed!.toSystemStatus();
         _systemStatus = SystemStatus.fromJson(statusMap).copyWith(
           mode: _lastConfirmedMode,
+          lastUpdated: DateTime.now(),
         );
         _errorMessage = null;
       } else {
         // Fallback to ESP32 direct connection
-        _systemStatus = await _apiService.getSystemStatus();
+        _systemStatus = (await _apiService.getSystemStatus()).copyWith(lastUpdated: DateTime.now());
         _errorMessage = null;
       }
     } catch (e) {
@@ -272,7 +273,7 @@ class SystemProvider with ChangeNotifier {
       // Try fallback to ESP32 if ThingSpeak fails
       if (_useThingSpeak) {
         try {
-          _systemStatus = await _apiService.getSystemStatus();
+          _systemStatus = (await _apiService.getSystemStatus()).copyWith(lastUpdated: DateTime.now());
           _errorMessage = null;
         } catch (e2) {
           _errorMessage = 'Failed to fetch from both ThingSpeak and ESP32: $e2';
