@@ -92,9 +92,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     padding: const EdgeInsets.all(AppSpacing.md),
                     child: Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.cloud_queue,
-                          color: AppColors.primary,
+                          color: isDark ? AppColors.secondary : AppColors.primary,
                         ),
                         const SizedBox(width: AppSpacing.sm),
                         Expanded(
@@ -135,7 +135,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 listen: false);
                             provider.toggleThingSpeak(value);
                           },
-                          activeThumbColor: AppColors.primary,
+                          activeColor: isDark ? AppColors.secondary : AppColors.primary,
+                          activeTrackColor: isDark ? AppColors.secondary.withValues(alpha: 0.5) : null,
                         ),
                       ],
                     ),
@@ -182,6 +183,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 _SettingsTextField(
                   label: 'Turn on below (lux)',
+                  hintText: '0 - 65535 lux',
                   value: _currentSettings.darkThreshold.toString(),
                   onChanged: (value) {
                     final intValue = int.tryParse(value);
@@ -198,6 +200,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: AppSpacing.md),
                 _SettingsTextField(
                   label: 'Turn off above (lux)',
+                  hintText: '0 - 65535 lux',
                   value: _currentSettings.brightThreshold.toString(),
                   onChanged: (value) {
                     final intValue = int.tryParse(value);
@@ -221,7 +224,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               icon: Icons.timer,
               children: [
                 _SettingsTextField(
-                  label: 'First dim after (seconds)',
+                  label: 'First dim after',
+                  hintText: '10 - 3600 seconds',
                   value: _currentSettings.dimLevel1Timeout.toString(),
                   onChanged: (value) {
                     final intValue = int.tryParse(value);
@@ -237,7 +241,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 _SettingsTextField(
-                  label: 'Second dim after (seconds)',
+                  label: 'Second dim after',
+                  hintText: '10 - 3600 seconds',
                   value: _currentSettings.dimLevel2Timeout.toString(),
                   onChanged: (value) {
                     final intValue = int.tryParse(value);
@@ -253,7 +258,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 _SettingsTextField(
-                  label: 'Third dim after (seconds)',
+                  label: 'Third dim after',
+                  hintText: '10 - 3600 seconds',
                   value: _currentSettings.dimLevel3Timeout.toString(),
                   onChanged: (value) {
                     final intValue = int.tryParse(value);
@@ -269,7 +275,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 _SettingsTextField(
-                  label: 'Switch off after (seconds)',
+                  label: 'Switch off after',
+                  hintText: '10 - 3600 seconds',
                   value: _currentSettings.sleepTimeout.toString(),
                   onChanged: (value) {
                     final intValue = int.tryParse(value);
@@ -294,6 +301,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 _SettingsTextField(
                   label: 'Fade Speed',
+                  hintText: '1 - 255',
                   value: _currentSettings.fadeSpeed.toString(),
                   onChanged: (value) {
                     final intValue = int.tryParse(value);
@@ -413,10 +421,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white
+                  : AppColors.primary,
+            ),
             child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white
+                  : AppColors.primary,
+            ),
             child: const Text('Restore'),
           ),
         ],
@@ -494,7 +512,7 @@ class _SettingsSection extends StatelessWidget {
           children: [
             Icon(
               icon,
-              color: AppColors.primary,
+              color: isDark ? AppColors.secondary : AppColors.primary,
               size: 24,
             ),
             const SizedBox(width: AppSpacing.sm),
@@ -534,12 +552,14 @@ class _SettingsTextField extends StatefulWidget {
   final String value;
   final ValueChanged<String> onChanged;
   final TextInputType keyboardType;
+  final String? hintText;
 
   const _SettingsTextField({
     required this.label,
     required this.value,
     required this.onChanged,
     required this.keyboardType,
+    this.hintText,
   });
 
   @override
@@ -581,6 +601,10 @@ class _SettingsTextFieldState extends State<_SettingsTextField> {
       keyboardType: widget.keyboardType,
       decoration: InputDecoration(
         labelText: widget.label,
+        helperText: widget.hintText,
+        helperStyle: AppTextStyles.caption.copyWith(
+          color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppBorderRadius.sm),
         ),
