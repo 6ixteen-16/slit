@@ -684,6 +684,29 @@ class SystemProvider with ChangeNotifier {
       }
     }
 
+    // Since ThingSpeak doesn't report system and mode events,
+    // inject them to provide context and ensure filters work.
+    if (feeds.isNotEmpty) {
+      final firstFeed = feeds.first;
+      final lastFeed = feeds.last;
+
+      logs.add(EventLog(
+        id: 'evt_sys_init_${firstFeed.entryId}',
+        timestamp: firstFeed.createdAt,
+        eventType: 'system',
+        message: 'System Online',
+        details: 'ThingSpeak connection established',
+      ));
+
+      logs.add(EventLog(
+        id: 'evt_mode_cur_${lastFeed.entryId}',
+        timestamp: lastFeed.createdAt,
+        eventType: 'mode',
+        message: 'Operating Mode: ${_lastConfirmedMode.toUpperCase()}',
+        details: 'Current active mode',
+      ));
+    }
+
     return EventLogList(logs);
   }
 

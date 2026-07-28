@@ -64,41 +64,50 @@ class _LiveMonitorView extends StatelessWidget {
         final isConnected = status.isConnected;
 
         return Scaffold(
-          appBar: AppBar(
-            leading: onBack != null
-                ? IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: onBack,
-                  )
-                : null,
-            title: const Text('Monitoring'),
-            elevation: 0,
-            actions: [
-              // Dark/light mode toggle — visible on all screens
-              IconButton(
-                icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
-                onPressed: () => provider.toggleTheme(),
-                tooltip: isDark ? 'Light Mode' : 'Dark Mode',
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(70),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, 0),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(AppBorderRadius.xl),
+                child: AppBar(
+                  leading: onBack != null
+                      ? IconButton(
+                          icon: const Icon(Icons.arrow_back),
+                          onPressed: onBack,
+                        )
+                      : null,
+                  title: const Text('Monitoring'),
+                  elevation: 0,
+                  actions: [
+                    // Dark/light mode toggle — visible on all screens
+                    IconButton(
+                      icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
+                      onPressed: () => provider.toggleTheme(),
+                      tooltip: isDark ? 'Light Mode' : 'Dark Mode',
+                    ),
+                    // Connection status chip
+                    ConnectionStatusWidget(
+                      status: provider.connectionStatus,
+                      compact: true,
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    // Pause / Resume button — uses provider-level isPaused
+                    IconButton(
+                      icon: Icon(isPaused ? Icons.play_arrow : Icons.pause),
+                      onPressed: () {
+                        if (isPaused) {
+                          provider.resumePolling();
+                        } else {
+                          provider.pausePolling();
+                        }
+                      },
+                      tooltip: isPaused ? 'Resume Updates' : 'Pause Updates',
+                    ),
+                  ],
+                ),
               ),
-              // Connection status chip
-              ConnectionStatusWidget(
-                status: provider.connectionStatus,
-                compact: true,
-              ),
-              const SizedBox(width: AppSpacing.xs),
-              // Pause / Resume button — uses provider-level isPaused
-              IconButton(
-                icon: Icon(isPaused ? Icons.play_arrow : Icons.pause),
-                onPressed: () {
-                  if (isPaused) {
-                    provider.resumePolling();
-                  } else {
-                    provider.pausePolling();
-                  }
-                },
-                tooltip: isPaused ? 'Resume Updates' : 'Pause Updates',
-              ),
-            ],
+            ),
           ),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(AppSpacing.md),

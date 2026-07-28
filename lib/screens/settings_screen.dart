@@ -46,29 +46,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(
-        leading: widget.onBack != null
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: widget.onBack,
-              )
-            : null,
-        title: const Text('Settings'),
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
-            onPressed: () {
-              Provider.of<SystemProvider>(context, listen: false).toggleTheme();
-            },
-            tooltip: isDark ? 'Light Mode' : 'Dark Mode',
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(70),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, 0),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppBorderRadius.xl),
+            child: AppBar(
+              leading: widget.onBack != null
+                  ? IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: widget.onBack,
+                    )
+                  : null,
+              title: const Text('Settings'),
+              elevation: 0,
+              actions: [
+                IconButton(
+                  icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
+                  onPressed: () {
+                    Provider.of<SystemProvider>(context, listen: false).toggleTheme();
+                  },
+                  tooltip: isDark ? 'Light Mode' : 'Dark Mode',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.restore),
+                  onPressed: _restoreDefaults,
+                  tooltip: 'Restore Defaults',
+                ),
+              ],
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.restore),
-            onPressed: _restoreDefaults,
-            tooltip: 'Restore Defaults',
-          ),
-        ],
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.md),

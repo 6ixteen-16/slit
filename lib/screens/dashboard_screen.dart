@@ -64,27 +64,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
         builder: (context) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
           final navIconColor = isDark ? null : AppColors.secondary;
-          return NavigationBar(
-            selectedIndex: _selectedIndex,
-            onDestinationSelected: _onTabSelected,
-            destinations: [
-              NavigationDestination(
-                icon: Icon(Icons.dashboard, color: navIconColor),
-                label: 'Dashboard',
+          return Padding(
+            padding: const EdgeInsets.only(left: AppSpacing.md, right: AppSpacing.md, bottom: AppSpacing.md),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppBorderRadius.xxl),
+              child: NavigationBar(
+                selectedIndex: _selectedIndex,
+                onDestinationSelected: _onTabSelected,
+                destinations: [
+                  NavigationDestination(
+                    icon: Icon(Icons.dashboard, color: navIconColor),
+                    label: 'Dashboard',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(Icons.monitor_heart, color: navIconColor),
+                    label: 'Monitor',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(Icons.touch_app, color: navIconColor),
+                    label: 'Control',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(Icons.settings, color: navIconColor),
+                    label: 'Settings',
+                  ),
+                ],
               ),
-              NavigationDestination(
-                icon: Icon(Icons.monitor_heart, color: navIconColor),
-                label: 'Monitor',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.touch_app, color: navIconColor),
-                label: 'Control',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.settings, color: navIconColor),
-                label: 'Settings',
-              ),
-            ],
+            ),
           );
         },
       ),
@@ -148,56 +154,65 @@ class _DashboardContentState extends State<_DashboardContent> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(appName),
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
-            onPressed: () {
-              Provider.of<SystemProvider>(context, listen: false).toggleTheme();
-            },
-          ),
-          Consumer<SystemProvider>(
-            builder: (context, provider, child) {
-              if (provider.isLoadingStatus) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-                  child: Center(
-                    child: SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                );
-              }
-              return const SizedBox.shrink();
-            },
-          ),
-          Consumer<SystemProvider>(
-            builder: (context, provider, child) {
-              return const Padding(
-                padding: EdgeInsets.only(right: AppSpacing.sm),
-                child: ThingSpeakStatusWidget(compact: true),
-              );
-            },
-          ),
-          Consumer<SystemProvider>(
-            builder: (context, provider, child) {
-              return Padding(
-                padding: const EdgeInsets.only(right: AppSpacing.md),
-                child: ConnectionStatusWidget(
-                  status: provider.connectionStatus,
-                  compact: true,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(70),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, 0),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppBorderRadius.xl),
+            child: AppBar(
+              title: const Text(appName),
+              elevation: 0,
+              actions: [
+                IconButton(
+                  icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
+                  onPressed: () {
+                    Provider.of<SystemProvider>(context, listen: false).toggleTheme();
+                  },
                 ),
-              );
-            },
+                Consumer<SystemProvider>(
+                  builder: (context, provider, child) {
+                    if (provider.isLoadingStatus) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                        child: Center(
+                          child: SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+                Consumer<SystemProvider>(
+                  builder: (context, provider, child) {
+                    return const Padding(
+                      padding: EdgeInsets.only(right: AppSpacing.sm),
+                      child: ThingSpeakStatusWidget(compact: true),
+                    );
+                  },
+                ),
+                Consumer<SystemProvider>(
+                  builder: (context, provider, child) {
+                    return Padding(
+                      padding: const EdgeInsets.only(right: AppSpacing.md),
+                      child: ConnectionStatusWidget(
+                        status: provider.connectionStatus,
+                        compact: true,
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
       body: Consumer<SystemProvider>(
         builder: (context, provider, child) {

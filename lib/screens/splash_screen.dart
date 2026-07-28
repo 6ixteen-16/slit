@@ -14,10 +14,6 @@ import 'package:smart_light/providers/system_provider.dart';
 import 'package:smart_light/utils/constants.dart';
 import 'package:smart_light/widgets/connection_status.dart';
 
-/// Splash Screen
-/// 
-/// Displays the app branding and initializes the system provider.
-/// Automatically navigates to the dashboard after initialization.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -26,45 +22,87 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
+    with TickerProviderStateMixin {
+  late AnimationController _appearController;
+  late AnimationController _glowController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
+  late Animation<double> _glowAnimation;
+
+  final List<String> _loadingMessages = [
+    'Connecting to ESP32...',
+    'Fetching telemetry data...',
+    'Calibrating sensors...',
+    'Warming up the lights...',
+    'Readying dashboard...'
+  ];
+  int _loadingMessageIndex = 0;
+  bool _isInitFinished = false;
 
   @override
   void initState() {
     super.initState();
     _setupAnimations();
+    _startDynamicText();
     _initializeApp();
   }
 
   /// Setup animations
   void _setupAnimations() {
-    _controller = AnimationController(
-      duration: AppAnimations.extraSlow,
+    _appearController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+      CurvedAnimation(parent: _appearController, curve: Curves.easeIn),
     );
 
     _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
+      CurvedAnimation(parent: _appearController, curve: Curves.easeOutBack),
     );
 
-    _controller.forward();
+    _glowController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _glowAnimation = Tween<double>(begin: 0.2, end: 0.8).animate(
+      CurvedAnimation(parent: _glowController, curve: Curves.easeInOut),
+    );
+
+    // Initial slight delay before showing Flutter splash to let native splash fade
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) _appearController.forward();
+    });
+  }
+
+  void _startDynamicText() async {
+    while (mounted && !_isInitFinished) {
+      await Future.delayed(const Duration(milliseconds: 800));
+      if (mounted) {
+        setState(() {
+          _loadingMessageIndex =
+              (_loadingMessageIndex + 1) % _loadingMessages.length;
+        });
+      }
+    }
   }
 
   /// Initialize application
   Future<void> _initializeApp() async {
+    // Wait a bit so user can see the splash screen and animations
+    await Future.delayed(const Duration(seconds: 2));
+    
+    if (!mounted) return;
     final provider = Provider.of<SystemProvider>(context, listen: false);
 
     // Initialize provider with connection
     await provider.initialize(autoPoll: false);
 
-    // Wait for animation to complete
-    await Future.delayed(AppAnimations.extraSlow);
+    // Give it a tiny bit more time for the final message
+    await Future.delayed(const Duration(seconds: 1));
+    _isInitFinished = true;
 
     // Navigate to dashboard
     if (mounted) {
@@ -74,7 +112,9 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   void dispose() {
-    _controller.dispose();
+    _isInitFinished = true;
+    _appearController.dispose();
+    _glowController.dispose();
     super.dispose();
   }
 
@@ -86,7 +126,7 @@ class _SplashScreenState extends State<SplashScreen>
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
       body: Center(
         child: AnimatedBuilder(
-          animation: _controller,
+          animation: Listenable.merge([_appearController, _glowController]),
           builder: (context, child) {
             return FadeTransition(
               opacity: _fadeAnimation,
@@ -95,21 +135,25 @@ class _SplashScreenState extends State<SplashScreen>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Logo/Icon
+                    // Logo/Icon with Glowing Pulse
                     Container(
                       width: 140,
                       height: 140,
                       decoration: BoxDecoration(
-                        color: AppColors.primary,
+                        gradient: LinearGradient(
+                          colors: [AppColors.primary, AppColors.secondary],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
                         borderRadius: BorderRadius.circular(AppBorderRadius.xl),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.4),
-                            blurRadius: 30,
-                            spreadRadius: 8,
+                            color: AppColors.primary.withValues(alpha: _glowAnimation.value),
+                            blurRadius: 30 + (20 * _glowAnimation.value),
+                            spreadRadius: 8 + (5 * _glowAnimation.value),
                           ),
                           BoxShadow(
-                            color: AppColors.accent.withValues(alpha: 0.15),
+                            color: AppColors.secondary.withValues(alpha: _glowAnimation.value * 0.5),
                             blurRadius: 50,
                             spreadRadius: 10,
                           ),
@@ -141,14 +185,14 @@ class _SplashScreenState extends State<SplashScreen>
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.sm),
-                    // App Description
+                    const SizedBox(height: AppSpacing.xs),
+                    // Creative Slogan
                     Text(
-                      appDescription,
+                      'Illuminating intelligence, effortlessly.',
                       style: AppTextStyles.bodyMedium.copyWith(
-                        color: isDark
-                            ? AppColors.darkTextSecondary
-                            : AppColors.textSecondary,
+                        color: AppColors.secondary,
+                        fontWeight: FontWeight.w500,
+                        fontStyle: FontStyle.italic,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -175,13 +219,17 @@ class _SplashScreenState extends State<SplashScreen>
                       ),
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    // Loading Text
-                    Text(
-                      'Initializing...',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: isDark
-                            ? AppColors.darkTextSecondary
-                            : AppColors.textSecondary,
+                    // Dynamic Loading Text
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: Text(
+                        _loadingMessages[_loadingMessageIndex],
+                        key: ValueKey<int>(_loadingMessageIndex),
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.textSecondary,
+                        ),
                       ),
                     ),
                   ],

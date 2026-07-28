@@ -67,16 +67,25 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Statistics'),
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _refreshStatistics,
-            tooltip: 'Refresh',
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(70),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, 0),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppBorderRadius.xl),
+            child: AppBar(
+              title: const Text('Statistics'),
+              elevation: 0,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: _refreshStatistics,
+                  tooltip: 'Refresh',
+                ),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
       body: Consumer<SystemProvider>(
         builder: (context, provider, child) {

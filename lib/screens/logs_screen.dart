@@ -45,45 +45,54 @@ class _LogsScreenState extends State<LogsScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Event Logs'),
-        elevation: 0,
-        actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.filter_list),
-            onSelected: (filter) {
-              setState(() {
-                _selectedFilter = filter;
-              });
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'All',
-                child: Text('All Events'),
-              ),
-              const PopupMenuItem(
-                value: 'presence',
-                child: Text('Presence Events'),
-              ),
-              const PopupMenuItem(
-                value: 'brightness',
-                child: Text('Brightness Events'),
-              ),
-              const PopupMenuItem(
-                value: 'state',
-                child: Text('State Changes'),
-              ),
-              const PopupMenuItem(
-                value: 'mode',
-                child: Text('Mode Changes'),
-              ),
-              const PopupMenuItem(
-                value: 'system',
-                child: Text('System Events'),
-              ),
-            ],
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(70),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, 0),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppBorderRadius.xl),
+            child: AppBar(
+              title: const Text('Event Logs'),
+              elevation: 0,
+              actions: [
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.filter_list),
+                  onSelected: (filter) {
+                    setState(() {
+                      _selectedFilter = filter;
+                    });
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'All',
+                      child: Text('All Events'),
+                    ),
+                    const PopupMenuItem(
+                      value: 'presence',
+                      child: Text('Presence Events'),
+                    ),
+                    const PopupMenuItem(
+                      value: 'brightness',
+                      child: Text('Brightness Events'),
+                    ),
+                    const PopupMenuItem(
+                      value: 'state',
+                      child: Text('State Changes'),
+                    ),
+                    const PopupMenuItem(
+                      value: 'mode',
+                      child: Text('Mode Changes'),
+                    ),
+                    const PopupMenuItem(
+                      value: 'system',
+                      child: Text('System Events'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
       body: Consumer<SystemProvider>(
         builder: (context, provider, child) {
@@ -172,9 +181,10 @@ class _LogTile extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppBorderRadius.md),
               ),
               child: Center(
-                child: Text(
-                  log.eventTypeIcon,
-                  style: const TextStyle(fontSize: 24),
+                child: Icon(
+                  _getEventIcon(log.eventType),
+                  color: _getEventTypeColor(log.eventType),
+                  size: 24,
                 ),
               ),
             ),
@@ -303,6 +313,24 @@ class _LogTile extends StatelessWidget {
         return 'System';
       default:
         return type;
+    }
+  }
+
+  /// Get event type icon
+  IconData _getEventIcon(String type) {
+    switch (type.toLowerCase()) {
+      case 'presence':
+        return Icons.person;
+      case 'brightness':
+        return Icons.lightbulb;
+      case 'state':
+        return Icons.swap_horiz_rounded;
+      case 'mode':
+        return Icons.settings;
+      case 'system':
+        return Icons.build;
+      default:
+        return Icons.info;
     }
   }
 }
