@@ -105,14 +105,14 @@ class _AnimatedLightState extends State<AnimatedLight>
                 height: widget.size * 1.5,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: lightColor.withValues(alpha: glowOpacity),
+                  color: lightColor.withOpacity(glowOpacity),
                 ),
               ),
               // Light bulb icon
               Icon(
                 Icons.lightbulb,
                 size: widget.size,
-                color: lightColor.withValues(alpha: bulbOpacity),
+                color: lightColor.withOpacity(bulbOpacity),
               ),
               // Off indicator when brightness is 0
               if (widget.brightness == 0)

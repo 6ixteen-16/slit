@@ -6,6 +6,9 @@ on:
   workflow_dispatch:
 
 jobs:
+  # ─────────────────────────────────────────
+  # Android – produces a release APK
+  # ─────────────────────────────────────────
   build_android:
     runs-on: ubuntu-latest
 
@@ -13,7 +16,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Java
+      - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -22,21 +25,32 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.27.4'
           channel: 'stable'
+          cache: true
 
       - name: Get dependencies
+        working-directory: smart_light
         run: flutter pub get
 
-      - name: Build APK
+      - name: Analyze code
+        working-directory: smart_light
+        run: flutter analyze --no-fatal-infos
+
+      - name: Build release APK
+        working-directory: smart_light
         run: flutter build apk --release
 
-      - name: Upload APK artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: smart-light-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: smart_light/build/app/outputs/flutter-apk/app-release.apk
           retention-days: 30
 
+  # ─────────────────────────────────────────
+  # iOS – produces an unsigned IPA for Sideloadly
+  # ─────────────────────────────────────────
   build_ios:
     runs-on: macos-latest
 
@@ -47,22 +61,28 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.27.4'
           channel: 'stable'
+          cache: true
 
       - name: Get dependencies
+        working-directory: smart_light
         run: flutter pub get
 
-      - name: Build iOS App (Unsigned)
-        run: |
-          flutter build ios --release --no-codesign
-          cd build/ios/iphoneos
-          mkdir Payload
-          cp -r Runner.app Payload/
-          zip -r ../smart-light-ios.ipa Payload
+      - name: Build iOS app (unsigned)
+        working-directory: smart_light
+        run: flutter build ios --release --no-codesign
 
-      - name: Upload iOS artifact
+      - name: Package IPA
+        working-directory: smart_light/build/ios/iphoneos
+        run: |
+          mkdir -p Payload
+          cp -r Runner.app Payload/
+          zip -r smart-light-ios.ipa Payload
+
+      - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: smart-light-ios-unsigned-ipa
-          path: build/ios/smart-light-ios.ipa
+          path: smart_light/build/ios/iphoneos/smart-light-ios.ipa
           retention-days: 30
