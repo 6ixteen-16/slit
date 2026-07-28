@@ -101,6 +101,8 @@ class _DashboardContent extends StatefulWidget {
 }
 
 class _DashboardContentState extends State<_DashboardContent> {
+  bool _isRefreshing = false;
+
   @override
   void initState() {
     super.initState();
@@ -109,6 +111,28 @@ class _DashboardContentState extends State<_DashboardContent> {
       final provider = Provider.of<SystemProvider>(context, listen: false);
       provider.startPolling();
     });
+  }
+
+  Future<void> _doRefresh() async {
+    if (_isRefreshing) return;
+    setState(() => _isRefreshing = true);
+    final provider = Provider.of<SystemProvider>(context, listen: false);
+    await provider.refreshAll();
+    if (!mounted) return;
+    setState(() => _isRefreshing = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          provider.errorMessage == null
+              ? 'Refreshed successfully'
+              : 'Refresh completed with errors',
+        ),
+        backgroundColor: provider.errorMessage == null
+            ? AppColors.success
+            : AppColors.warning,
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   @override
@@ -403,11 +427,9 @@ class _DashboardContentState extends State<_DashboardContent> {
                       const SizedBox(width: AppSpacing.md),
                       Expanded(
                         child: _QuickActionButton(
-                          icon: Icons.refresh,
-                          label: 'Refresh',
-                          onTap: () {
-                            provider.refreshAll();
-                          },
+                          icon: _isRefreshing ? Icons.hourglass_top : Icons.refresh,
+                          label: _isRefreshing ? 'Refreshing…' : 'Refresh',
+                          onTap: _isRefreshing ? null : _doRefresh,
                         ),
                       ),
                     ],
@@ -469,7 +491,7 @@ class _DashboardContentState extends State<_DashboardContent> {
 class _QuickActionButton extends StatelessWidget {
   final IconData icon;
   final String label;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const _QuickActionButton({
     required this.icon,
@@ -480,42 +502,46 @@ class _QuickActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final enabled = onTap != null;
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppBorderRadius.card),
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: isDark
-              ? AppColors.darkCardBackground
-              : AppColors.cardBackground,
-          borderRadius: BorderRadius.circular(AppBorderRadius.card),
-          border: Border.all(
+    return Opacity(
+      opacity: enabled ? 1.0 : 0.5,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppBorderRadius.card),
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
             color: isDark
                 ? AppColors.darkCardBackground
-                : AppColors.secondary,
-            width: 1,
+                : AppColors.cardBackground,
+            borderRadius: BorderRadius.circular(AppBorderRadius.card),
+            border: Border.all(
+              color: isDark
+                  ? AppColors.darkCardBackground
+                  : AppColors.secondary,
+              width: 1,
+            ),
           ),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              color: isDark ? AppColors.secondary : AppColors.primary,
-              size: 32,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              label,
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: isDark
-                    ? AppColors.darkTextPrimary
-                    : AppColors.textPrimary,
-                fontWeight: FontWeight.w600,
+          child: Column(
+            children: [
+              Icon(
+                icon,
+                color: isDark ? AppColors.secondary : AppColors.primary,
+                size: 32,
               ),
-            ),
-          ],
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                label,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: isDark
+                      ? AppColors.darkTextPrimary
+                      : AppColors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
