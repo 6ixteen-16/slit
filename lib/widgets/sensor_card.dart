@@ -64,7 +64,7 @@ class SensorCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(AppSpacing.sm),
                 decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: 0.15),
+                  color: accentColor.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(AppBorderRadius.sm),
                 ),
                 child: Icon(

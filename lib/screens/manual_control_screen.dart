@@ -91,9 +91,9 @@ class _ManualControlScreenState extends State<ManualControlScreen> {
                       vertical: AppSpacing.sm,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.error.withValues(alpha: 0.12),
+                      color: AppColors.error.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(AppBorderRadius.card),
-                      border: Border.all(color: AppColors.error.withValues(alpha: 0.4)),
+                      border: Border.all(color: AppColors.error.withOpacity(0.4)),
                     ),
                     child: Row(
                       children: [
@@ -206,7 +206,7 @@ class _ManualControlScreenState extends State<ManualControlScreen> {
                                   vertical: AppSpacing.xs,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.warning.withValues(alpha: 0.1),
+                                  color: AppColors.warning.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(
                                     AppBorderRadius.sm,
                                   ),
@@ -469,7 +469,7 @@ class _ModeButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppBorderRadius.md),
         color: isDark ? AppColors.primary : AppColors.cardBackground,
         border: Border.all(
-          color: isDark ? AppColors.primaryLight : AppColors.textDisabled.withValues(alpha: 0.3),
+          color: isDark ? AppColors.primaryLight : AppColors.textDisabled.withOpacity(0.3),
           width: 2,
         ),
       );

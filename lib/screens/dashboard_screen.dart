@@ -235,9 +235,9 @@ class _DashboardContentState extends State<_DashboardContent> {
                         vertical: AppSpacing.sm,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.error.withValues(alpha: 0.12),
+                        color: AppColors.error.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(AppBorderRadius.card),
-                        border: Border.all(color: AppColors.error.withValues(alpha: 0.4)),
+                        border: Border.all(color: AppColors.error.withOpacity(0.4)),
                       ),
                       child: Row(
                         children: [
@@ -284,7 +284,7 @@ class _DashboardContentState extends State<_DashboardContent> {
                                     boxShadow: status.presence
                                         ? [
                                             BoxShadow(
-                                              color: AppColors.accent.withValues(alpha: 0.5),
+                                              color: AppColors.accent.withOpacity(0.5),
                                               blurRadius: 8,
                                               spreadRadius: 2,
                                             ),

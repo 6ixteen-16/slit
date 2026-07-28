@@ -177,7 +177,7 @@ class _LogTile extends StatelessWidget {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: _getEventTypeColor(log.eventType).withValues(alpha: 0.1),
+                color: _getEventTypeColor(log.eventType).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(AppBorderRadius.md),
               ),
               child: Center(

@@ -145,7 +145,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             provider.toggleThingSpeak(value);
                           },
                           activeColor: isDark ? AppColors.secondary : AppColors.primary,
-                          activeTrackColor: isDark ? AppColors.secondary.withValues(alpha: 0.5) : null,
+                          activeTrackColor: isDark ? AppColors.secondary.withOpacity(0.5) : null,
                         ),
                       ],
                     ),
@@ -348,7 +348,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppBorderRadius.card),
                 ),
-                color: AppColors.error.withValues(alpha: 0.1),
+                color: AppColors.error.withOpacity(0.1),
                 child: Padding(
                   padding: const EdgeInsets.all(AppSpacing.md),
                   child: Row(

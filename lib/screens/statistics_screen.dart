@@ -510,7 +510,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                       ),
                                       belowBarData: BarAreaData(
                                         show: true,
-                                        color: AppColors.accent.withValues(alpha: 0.15),
+                                        color: AppColors.accent.withOpacity(0.15),
                                       ),
                                     ),
                                   ],
@@ -806,7 +806,7 @@ class _StatCard extends StatelessWidget {
                       vertical: AppSpacing.xs,
                     ),
                     decoration: BoxDecoration(
-                      color: badgeColor.withValues(alpha: 0.1),
+                      color: badgeColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(
                         AppBorderRadius.sm,
                       ),
@@ -937,7 +937,7 @@ class _TimeRangeChip extends StatelessWidget {
           border: Border.all(
             color: selected
                 ? Colors.transparent
-                : (isDark ? AppColors.primaryLight : AppColors.textSecondary.withValues(alpha: 0.3)),
+                : (isDark ? AppColors.primaryLight : AppColors.textSecondary.withOpacity(0.3)),
           ),
         ),
         child: Text(
