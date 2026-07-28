@@ -738,20 +738,20 @@ class SystemProvider with ChangeNotifier {
     final presenceCount =
         feeds.where((f) => f.getFieldAsBool('presence')).length;
 
-    // Fields 6-8 are cumulative milliseconds supplied by the ESP32.
+    // Fields 6-8 are cumulative seconds supplied by the ESP32.
     // Calculate the difference between the most recent and earliest feed
     // in the requested time range.
     final latest = feeds.last;
     final earliest = feeds.first;
     
-    int activeTime = (latest.getFieldAsInt('active_time') - earliest.getFieldAsInt('active_time')) ~/ 1000;
-    int idleTime = (latest.getFieldAsInt('idle_time') - earliest.getFieldAsInt('idle_time')) ~/ 1000;
-    int sleepTime = (latest.getFieldAsInt('sleep_time') - earliest.getFieldAsInt('sleep_time')) ~/ 1000;
+    int activeTime = latest.getFieldAsInt('active_time') - earliest.getFieldAsInt('active_time');
+    int idleTime = latest.getFieldAsInt('idle_time') - earliest.getFieldAsInt('idle_time');
+    int sleepTime = latest.getFieldAsInt('sleep_time') - earliest.getFieldAsInt('sleep_time');
     
     // Prevent negative values if ESP32 restarted during the period
-    if (activeTime < 0) activeTime = latest.getFieldAsInt('active_time') ~/ 1000;
-    if (idleTime < 0) idleTime = latest.getFieldAsInt('idle_time') ~/ 1000;
-    if (sleepTime < 0) sleepTime = latest.getFieldAsInt('sleep_time') ~/ 1000;
+    if (activeTime < 0) activeTime = latest.getFieldAsInt('active_time');
+    if (idleTime < 0) idleTime = latest.getFieldAsInt('idle_time');
+    if (sleepTime < 0) sleepTime = latest.getFieldAsInt('sleep_time');
     
     final energySavingTime = sleepTime + idleTime;
 
