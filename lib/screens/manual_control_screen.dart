@@ -179,14 +179,17 @@ class _ManualControlScreenState extends State<ManualControlScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              'Manual Brightness Control',
-                              style: AppTextStyles.headline3.copyWith(
-                                color: isDark
-                                    ? AppColors.darkTextPrimary
-                                    : AppColors.textPrimary,
+                            Expanded(
+                              child: Text(
+                                'Manual Brightness Control',
+                                style: AppTextStyles.headline3.copyWith(
+                                  color: isDark
+                                      ? AppColors.darkTextPrimary
+                                      : AppColors.textPrimary,
+                                ),
                               ),
                             ),
+                            const SizedBox(width: AppSpacing.sm),
                             if (!isManualMode)
                               Container(
                                 padding: const EdgeInsets.symmetric(
