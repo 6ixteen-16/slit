@@ -10,7 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_light/providers/system_provider.dart';
 import 'package:smart_light/utils/constants.dart';
-import 'package:smart_light/widgets/custom_button.dart';
 import 'package:smart_light/widgets/custom_slider.dart';
 import 'package:smart_light/widgets/brightness_card.dart';
 import 'package:smart_light/widgets/animated_light.dart';
@@ -90,9 +89,9 @@ class _ManualControlScreenState extends State<ManualControlScreen> {
                       vertical: AppSpacing.sm,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.error.withOpacity(0.12),
+                      color: AppColors.error.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(AppBorderRadius.card),
-                      border: Border.all(color: AppColors.error.withOpacity(0.4)),
+                      border: Border.all(color: AppColors.error.withValues(alpha: 0.4)),
                     ),
                     child: Row(
                       children: [
@@ -205,7 +204,7 @@ class _ManualControlScreenState extends State<ManualControlScreen> {
                                   vertical: AppSpacing.xs,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.warning.withOpacity(0.1),
+                                  color: AppColors.warning.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(
                                     AppBorderRadius.sm,
                                   ),
@@ -468,7 +467,7 @@ class _ModeButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppBorderRadius.md),
         color: isDark ? AppColors.primary : AppColors.cardBackground,
         border: Border.all(
-          color: isDark ? AppColors.primaryLight : AppColors.textDisabled.withOpacity(0.3),
+          color: isDark ? AppColors.primaryLight : AppColors.textDisabled.withValues(alpha: 0.3),
           width: 2,
         ),
       );

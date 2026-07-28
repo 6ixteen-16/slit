@@ -59,39 +59,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
             SettingsScreen(onBack: () => _onTabSelected(0)),
           ],
         ),
-      bottomNavigationBar: Builder(
-        builder: (context) {
-          final isDark = Theme.of(context).brightness == Brightness.dark;
-          final navIconColor = isDark ? null : AppColors.secondary;
-          return Padding(
-            padding: const EdgeInsets.only(left: AppSpacing.md, right: AppSpacing.md, bottom: AppSpacing.md),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppBorderRadius.xxl),
-              child: NavigationBar(
-                selectedIndex: _selectedIndex,
-                onDestinationSelected: _onTabSelected,
-                destinations: [
-                  NavigationDestination(
-                    icon: Icon(Icons.dashboard, color: navIconColor),
-                    label: 'Dashboard',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(Icons.monitor_heart, color: navIconColor),
-                    label: 'Monitor',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(Icons.touch_app, color: navIconColor),
-                    label: 'Control',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(Icons.settings, color: navIconColor),
-                    label: 'Settings',
-                  ),
-                ],
+        bottomNavigationBar: Builder(
+          builder: (context) {
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            final navIconColor = isDark ? null : AppColors.secondary;
+            return Padding(
+              padding: const EdgeInsets.only(left: AppSpacing.md, right: AppSpacing.md, bottom: AppSpacing.md),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(AppBorderRadius.xxl),
+                child: NavigationBar(
+                  selectedIndex: _selectedIndex,
+                  onDestinationSelected: _onTabSelected,
+                  destinations: [
+                    NavigationDestination(
+                      icon: Icon(Icons.dashboard, color: navIconColor),
+                      label: 'Dashboard',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.monitor_heart, color: navIconColor),
+                      label: 'Monitor',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.touch_app, color: navIconColor),
+                      label: 'Control',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.settings, color: navIconColor),
+                      label: 'Settings',
+                    ),
+                  ],
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
@@ -234,9 +235,9 @@ class _DashboardContentState extends State<_DashboardContent> {
                         vertical: AppSpacing.sm,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.error.withOpacity(0.12),
+                        color: AppColors.error.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(AppBorderRadius.card),
-                        border: Border.all(color: AppColors.error.withOpacity(0.4)),
+                        border: Border.all(color: AppColors.error.withValues(alpha: 0.4)),
                       ),
                       child: Row(
                         children: [
@@ -283,7 +284,7 @@ class _DashboardContentState extends State<_DashboardContent> {
                                     boxShadow: status.presence
                                         ? [
                                             BoxShadow(
-                                              color: AppColors.accent.withOpacity(0.5),
+                                              color: AppColors.accent.withValues(alpha: 0.5),
                                               blurRadius: 8,
                                               spreadRadius: 2,
                                             ),

@@ -133,7 +133,7 @@ class SmartLightApp extends StatelessWidget {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.primary,
-        indicatorColor: AppColors.accent.withOpacity(0.25),
+        indicatorColor: AppColors.accent.withValues(alpha: 0.25),
         labelTextStyle: WidgetStateProperty.all(
           GoogleFonts.poppins(
             fontSize: 12,
@@ -260,7 +260,7 @@ class SmartLightApp extends StatelessWidget {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.darkSurface,
-        indicatorColor: AppColors.accent.withOpacity(0.25),
+        indicatorColor: AppColors.accent.withValues(alpha: 0.25),
         labelTextStyle: WidgetStateProperty.all(
           GoogleFonts.poppins(
             fontSize: 12,

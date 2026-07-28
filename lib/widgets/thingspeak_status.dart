@@ -148,7 +148,7 @@ class ThingSpeakStatusWidget extends StatelessWidget {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: AppColors.textSecondary.withOpacity(0.1),
+          color: AppColors.textSecondary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(AppBorderRadius.card),
         ),
         child: const Icon(
@@ -163,7 +163,7 @@ class ThingSpeakStatusWidget extends StatelessWidget {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: AppColors.error.withOpacity(0.1),
+          color: AppColors.error.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(AppBorderRadius.md),
         ),
         child: const Icon(
@@ -178,7 +178,7 @@ class ThingSpeakStatusWidget extends StatelessWidget {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: AppColors.success.withOpacity(0.1),
+          color: AppColors.success.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(AppBorderRadius.md),
         ),
         child: const Icon(
@@ -192,7 +192,7 @@ class ThingSpeakStatusWidget extends StatelessWidget {
       width: 40,
       height: 40,
       decoration: BoxDecoration(
-        color: AppColors.warning.withOpacity(0.1),
+        color: AppColors.warning.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppBorderRadius.md),
       ),
       child: const Icon(
@@ -231,7 +231,7 @@ class ThingSpeakStatusWidget extends StatelessWidget {
         vertical: AppSpacing.xs,
       ),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppBorderRadius.sm),
       ),
       child: Text(
