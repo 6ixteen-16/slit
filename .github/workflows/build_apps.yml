@@ -30,22 +30,19 @@ jobs:
           cache: true
 
       - name: Get dependencies
-        working-directory: smart_light
         run: flutter pub get
 
       - name: Analyze code
-        working-directory: smart_light
         run: flutter analyze --no-fatal-infos
 
       - name: Build release APK
-        working-directory: smart_light
         run: flutter build apk --release
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: smart-light-apk
-          path: smart_light/build/app/outputs/flutter-apk/app-release.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
           retention-days: 30
 
   # ─────────────────────────────────────────
@@ -66,15 +63,13 @@ jobs:
           cache: true
 
       - name: Get dependencies
-        working-directory: smart_light
         run: flutter pub get
 
       - name: Build iOS app (unsigned)
-        working-directory: smart_light
         run: flutter build ios --release --no-codesign
 
       - name: Package IPA
-        working-directory: smart_light/build/ios/iphoneos
+        working-directory: build/ios/iphoneos
         run: |
           mkdir -p Payload
           cp -r Runner.app Payload/
@@ -84,5 +79,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: smart-light-ios-unsigned-ipa
-          path: smart_light/build/ios/iphoneos/smart-light-ios.ipa
+          path: build/ios/iphoneos/smart-light-ios.ipa
           retention-days: 30

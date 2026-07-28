@@ -6,7 +6,6 @@
 ///
 /// Purpose: Provide users with insights into system usage patterns
 /// and energy efficiency through visual data representation.
-library;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

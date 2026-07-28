@@ -5,7 +5,6 @@
 /// 
 /// Purpose: Provide a clear visual representation of connection
 /// status with appropriate colors and icons.
-library;
 
 import 'package:flutter/material.dart';
 import 'package:smart_light/utils/constants.dart';

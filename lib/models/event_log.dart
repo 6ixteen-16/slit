@@ -5,7 +5,6 @@
 /// 
 /// Purpose: Provide a structured representation of system events for
 /// chronological display and analysis.
-library;
 
 /// EventLog
 /// 

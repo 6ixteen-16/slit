@@ -5,7 +5,6 @@
 ///
 /// Purpose: Provide strongly-typed models for ThingSpeak JSON
 /// responses with serialization support.
-library;
 
 import 'package:smart_light/config/thingspeak_config.dart';
 

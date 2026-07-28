@@ -5,7 +5,6 @@
 ///
 /// Purpose: Provide a structured representation of system state for
 /// type-safe data handling and JSON serialization/deserialization.
-library;
 
 import 'package:smart_light/utils/constants.dart';
 

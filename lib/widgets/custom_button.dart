@@ -5,7 +5,6 @@
 ///
 /// Purpose: Provide a consistent button component across the
 /// application with Material 3 design.
-library;
 
 import 'package:flutter/material.dart';
 import 'package:smart_light/utils/constants.dart';

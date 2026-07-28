@@ -5,7 +5,6 @@
 /// 
 /// Purpose: Provide a consistent UI component for displaying
 /// sensor readings across the application.
-library;
 
 import 'package:flutter/material.dart';
 import 'package:smart_light/utils/constants.dart';

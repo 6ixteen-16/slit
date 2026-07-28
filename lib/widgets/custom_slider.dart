@@ -5,7 +5,6 @@
 /// 
 /// Purpose: Provide a consistent slider component for brightness
 /// and other value controls with Material 3 design.
-library;
 
 import 'package:flutter/material.dart';
 import 'package:smart_light/utils/constants.dart';

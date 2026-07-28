@@ -5,7 +5,6 @@
 /// 
 /// Purpose: Provide reusable utility functions for common operations
 /// such as formatting, validation, and data transformation.
-library;
 
 import 'dart:async';
 import 'package:intl/intl.dart';

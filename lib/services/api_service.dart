@@ -6,7 +6,6 @@
 ///
 /// Purpose: Abstract network operations from the UI layer and provide
 /// a clean interface for ESP32 communication.
-library;
 
 import 'dart:async';
 import 'dart:convert';

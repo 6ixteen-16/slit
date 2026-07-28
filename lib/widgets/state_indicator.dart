@@ -5,7 +5,6 @@
 /// 
 /// Purpose: Provide a clear visual representation of system state
 /// with appropriate colors and animations.
-library;
 
 import 'package:flutter/material.dart';
 import 'package:smart_light/utils/constants.dart';

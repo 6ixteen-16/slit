@@ -6,7 +6,6 @@
 /// 
 /// Purpose: Provide a professional loading experience and
 /// initialize the application before navigating to the main dashboard.
-library;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

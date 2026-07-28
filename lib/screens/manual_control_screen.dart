@@ -5,7 +5,6 @@
 /// 
 /// Purpose: Allow users to switch between auto and manual modes
 /// and manually control LED brightness when in manual mode.
-library;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

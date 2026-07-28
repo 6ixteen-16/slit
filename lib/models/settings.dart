@@ -5,7 +5,6 @@
 ///
 /// Purpose: Provide a structured representation of system settings for
 /// configuration management and persistence.
-library;
 
 import 'package:smart_light/utils/constants.dart';
 

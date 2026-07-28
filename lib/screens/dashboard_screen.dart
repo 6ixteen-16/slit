@@ -5,7 +5,6 @@
 /// 
 /// Purpose: Provide a comprehensive at-a-glance view of system status
 /// including connection, presence, ambient light, brightness, and operating mode.
-library;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

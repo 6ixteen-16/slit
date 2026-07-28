@@ -4,7 +4,6 @@
 /// 
 /// Purpose: Provide users with clear feedback on ThingSpeak connectivity
 /// and data source status.
-library;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

@@ -5,7 +5,6 @@
 ///
 /// Purpose: Centralize state management, coordinate between services,
 /// and provide reactive state updates to the UI layer.
-library;
 
 import 'dart:async';
 import 'package:flutter/material.dart';

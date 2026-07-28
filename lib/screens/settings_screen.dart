@@ -5,7 +5,6 @@
 ///
 /// Purpose: Allow users to customize system behavior by adjusting
 /// ambient light thresholds, dim timeouts, and other parameters.
-library;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

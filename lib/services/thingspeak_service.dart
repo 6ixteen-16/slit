@@ -8,7 +8,6 @@
 /// - Runtime settings updates
 /// - Statistics and event logs
 
-library;
 
 import 'dart:async';
 import 'dart:convert';

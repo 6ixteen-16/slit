@@ -5,7 +5,6 @@
 /// 
 /// Purpose: Manage connection state, handle reconnection logic, and
 /// provide connection status to the UI layer.
-library;
 
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';

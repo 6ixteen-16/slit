@@ -6,7 +6,6 @@
 /// Purpose: Provide users with a detailed view of system events
 /// including presence detection, brightness changes, state transitions,
 /// and mode changes.
-library;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

@@ -5,7 +5,6 @@
 ///
 /// Purpose: Provide continuous real-time monitoring of all system
 /// metrics without requiring manual refresh.
-library;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

@@ -5,7 +5,6 @@
 /// 
 /// Purpose: Bootstrap the application with proper configuration
 /// and dependency injection.
-library;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -108,7 +107,7 @@ class SmartLightApp extends StatelessWidget {
           ),
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 2,
         color: AppColors.cardBackground,
         shape: RoundedRectangleBorder(
@@ -235,7 +234,7 @@ class SmartLightApp extends StatelessWidget {
           ),
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 2,
         color: AppColors.darkCardBackground,
         shape: RoundedRectangleBorder(

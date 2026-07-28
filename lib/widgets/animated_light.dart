@@ -5,7 +5,6 @@
 /// 
 /// Purpose: Provide a visual representation of the LED strip's
 /// current brightness with smooth animations.
-library;
 
 import 'package:flutter/material.dart';
 import 'package:smart_light/utils/constants.dart';

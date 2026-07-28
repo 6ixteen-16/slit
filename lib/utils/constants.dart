@@ -5,7 +5,6 @@
 ///
 /// Purpose: Centralize constant values to ensure consistency
 /// and ease of maintenance across the application.
-library;
 
 import 'package:flutter/material.dart';
 
@@ -169,6 +168,7 @@ class AppBorderRadius {
   static const double md = 12.0;
   static const double lg = 20.0; // Updated for card design (18-22px)
   static const double xl = 24.0;
+  static const double xxl = 32.0;
   static const double card = 20.0; // Standard card radius
   static const double circle = 999.0;
 }

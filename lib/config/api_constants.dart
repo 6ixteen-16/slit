@@ -5,7 +5,6 @@
 ///
 /// Purpose: Centralize API endpoint definitions to ensure consistency
 /// and ease of maintenance across the application.
-library;
 
 /// Base URL for the ESP32 REST API
 ///

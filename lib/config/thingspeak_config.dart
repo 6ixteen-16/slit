@@ -4,7 +4,6 @@
 ///
 /// Purpose: Centralize ThingSpeak channel credentials, API keys,
 /// and field mappings for easy configuration and maintenance.
-library;
 
 /// ThingSpeak Configuration
 ///

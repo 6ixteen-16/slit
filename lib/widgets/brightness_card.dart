@@ -5,7 +5,6 @@
 /// 
 /// Purpose: Provide a visual representation of current brightness
 /// level with a progress bar and percentage display.
-library;
 
 import 'package:flutter/material.dart';
 import 'package:smart_light/utils/constants.dart';
