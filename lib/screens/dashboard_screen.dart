@@ -165,6 +165,7 @@ class _DashboardContentState extends State<_DashboardContent> {
       body: Consumer<SystemProvider>(
         builder: (context, provider, child) {
           final status = provider.systemStatus;
+          final isConnected = status.isConnected;
 
           return RefreshIndicator(
             onRefresh: () => provider.refreshAll(),
@@ -173,6 +174,37 @@ class _DashboardContentState extends State<_DashboardContent> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Disconnected banner
+                  if (!isConnected) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                        vertical: AppSpacing.sm,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.error.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(AppBorderRadius.card),
+                        border: Border.all(color: AppColors.error.withValues(alpha: 0.4)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.wifi_off, color: AppColors.error, size: 20),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: Text(
+                              'Not connected \u2014 pull to refresh or check your connection.',
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: AppColors.error,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
                   // Animated Light and Presence Indicator
                   Row(
                     children: [

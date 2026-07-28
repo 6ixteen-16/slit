@@ -49,6 +49,7 @@ class _ManualControlScreenState extends State<ManualControlScreen> {
       body: Consumer<SystemProvider>(
         builder: (context, provider, child) {
           final status = provider.systemStatus;
+          final isConnected = status.isConnected;
           final isManualMode = status.isManualMode;
 
           return SingleChildScrollView(
@@ -56,6 +57,37 @@ class _ManualControlScreenState extends State<ManualControlScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Disconnected banner
+                if (!isConnected) ...[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.sm,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.error.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(AppBorderRadius.card),
+                      border: Border.all(color: AppColors.error.withValues(alpha: 0.4)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.wifi_off, color: AppColors.error, size: 20),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: Text(
+                            'No connection — controls are disabled until the device is reachable.',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.error,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                ],
                 // Mode Selection
                 Card(
                   elevation: 2,
@@ -83,7 +115,7 @@ class _ManualControlScreenState extends State<ManualControlScreen> {
                                 label: 'Auto Mode',
                                 icon: Icons.autorenew,
                                 isSelected: !isManualMode,
-                                onTap: () => _switchMode(OperatingMode.auto),
+                                onTap: isConnected ? () => _switchMode(OperatingMode.auto) : null,
                               ),
                             ),
                             const SizedBox(width: AppSpacing.md),
@@ -92,7 +124,7 @@ class _ManualControlScreenState extends State<ManualControlScreen> {
                                 label: 'Manual Mode',
                                 icon: Icons.touch_app,
                                 isSelected: isManualMode,
-                                onTap: () => _switchMode(OperatingMode.manual),
+                                onTap: isConnected ? () => _switchMode(OperatingMode.manual) : null,
                               ),
                             ),
                           ],
@@ -105,14 +137,14 @@ class _ManualControlScreenState extends State<ManualControlScreen> {
 
                 // Current Brightness Display
                 AnimatedLight(
-                  brightness: status.brightness,
+                  brightness: isConnected ? status.brightness : 0,
                   size: 100,
                 ),
                 const SizedBox(height: AppSpacing.md),
                 Center(
                   child: BrightnessCard(
-                    brightness: status.brightness,
-                    label: 'Current Brightness',
+                    brightness: isConnected ? status.brightness : 0,
+                    label: isConnected ? 'Current Brightness' : 'Brightness (Disconnected)',
                   ),
                 ),
                 const SizedBox(height: AppSpacing.lg),
@@ -170,9 +202,9 @@ class _ManualControlScreenState extends State<ManualControlScreen> {
                           divisions: AppSliderConfig.divisions,
                           label: 'Brightness',
                           color: AppColors.accent,
-                          enabled: isManualMode && !_isSending,
+                          enabled: isConnected && isManualMode && !_isSending,
                           showValue: true,
-                          onChanged: isManualMode
+                          onChanged: isConnected && isManualMode
                               ? (value) {
                                   setState(() {
                                     _brightnessValue = value;
@@ -186,7 +218,7 @@ class _ManualControlScreenState extends State<ManualControlScreen> {
                         CustomButton(
                           text: 'Apply Brightness',
                           icon: Icons.check,
-                          onPressed: isManualMode
+                          onPressed: isConnected && isManualMode
                               ? () => _applyBrightness()
                               : null,
                           variant: ButtonVariant.primary,
@@ -200,7 +232,7 @@ class _ManualControlScreenState extends State<ManualControlScreen> {
                 const SizedBox(height: AppSpacing.lg),
 
                 // Quick Presets
-                if (isManualMode) ...[
+                if (isConnected && isManualMode) ...[
                   Text(
                     'Quick Presets',
                     style: AppTextStyles.headline3.copyWith(
@@ -268,9 +300,11 @@ class _ManualControlScreenState extends State<ManualControlScreen> {
                         const SizedBox(width: AppSpacing.sm),
                         Expanded(
                           child: Text(
-                            isManualMode
-                                ? 'In manual mode, you have full control over the LED brightness. Use the slider or quick presets to adjust brightness.'
-                                : 'Switch to manual mode to take control of the LED brightness. In auto mode, the ESP32 controls brightness based on ambient light and presence.',
+                            !isConnected
+                                ? 'No connection to the device. Connect to the same network as the ESP32, or ensure ThingSpeak is enabled and the device is online.'
+                                : isManualMode
+                                    ? 'In manual mode, you have full control over the LED brightness. Use the slider or quick presets to adjust brightness.'
+                                    : 'Switch to manual mode to take control of the LED brightness. In auto mode, the ESP32 controls brightness based on ambient light and presence.',
                             style: AppTextStyles.bodySmall.copyWith(
                               color: isDark
                                   ? AppColors.darkTextSecondary
