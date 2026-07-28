@@ -104,13 +104,15 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                       ),
                       child: Padding(
                         padding: const EdgeInsets.all(AppSpacing.md),
-                        child: Row(
+                        child: Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: AppSpacing.sm,
+                          runSpacing: AppSpacing.sm,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.date_range,
-                              color: AppColors.primary,
+                              color: isDark ? AppColors.secondary : AppColors.primary,
                             ),
-                            const SizedBox(width: AppSpacing.sm),
                             Text(
                               'Time Range:',
                               style: AppTextStyles.bodyMedium.copyWith(
@@ -119,7 +121,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                     : AppColors.textPrimary,
                               ),
                             ),
-                            const SizedBox(width: AppSpacing.md),
                             _TimeRangeChip(
                               label: 'Hour',
                               selected: _selectedTimeRange == 'hour',
@@ -130,7 +131,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                 _refreshStatistics();
                               },
                             ),
-                            const SizedBox(width: AppSpacing.sm),
                             _TimeRangeChip(
                               label: 'Day',
                               selected: _selectedTimeRange == 'day',
@@ -141,7 +141,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                 _refreshStatistics();
                               },
                             ),
-                            const SizedBox(width: AppSpacing.sm),
                             _TimeRangeChip(
                               label: 'Week',
                               selected: _selectedTimeRange == 'week',
@@ -171,7 +170,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Time Distribution Today',
+                            'Time Distribution (${_selectedTimeRange.substring(0, 1).toUpperCase()}${_selectedTimeRange.substring(1)})',
                             style: AppTextStyles.headline3.copyWith(
                               color: isDark
                                   ? AppColors.darkTextPrimary
@@ -179,73 +178,91 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                             ),
                           ),
                           const SizedBox(height: AppSpacing.lg),
-                          SizedBox(
-                            height: 200,
-                            child: PieChart(
-                              PieChartData(
-                                sections: [
-                                  PieChartSectionData(
-                                    value: (stats['active_time'] as num?)
-                                            ?.toDouble() ??
-                                        0.0,
-                                    title: 'Active',
-                                    color: AppColors.success,
-                                    radius: 50,
-                                    titleStyle: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                          if ((stats['active_time'] as num? ?? 0) == 0 &&
+                              (stats['idle_time'] as num? ?? 0) == 0 &&
+                              (stats['sleep_time'] as num? ?? 0) == 0)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                              child: Center(
+                                child: Text(
+                                  'No data available for this time range.',
+                                  style: AppTextStyles.bodyMedium.copyWith(
+                                    color: isDark
+                                        ? AppColors.darkTextSecondary
+                                        : AppColors.textSecondary,
                                   ),
-                                  PieChartSectionData(
-                                    value: (stats['idle_time'] as num?)
-                                            ?.toDouble() ??
-                                        0.0,
-                                    title: 'Idle',
-                                    color: AppColors.warning,
-                                    radius: 50,
-                                    titleStyle: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            )
+                          else ...[
+                            SizedBox(
+                              height: 200,
+                              child: PieChart(
+                                PieChartData(
+                                  sections: [
+                                    PieChartSectionData(
+                                      value: (stats['active_time'] as num?)
+                                              ?.toDouble() ??
+                                          0.0,
+                                      title: 'Active',
+                                      color: AppColors.success,
+                                      radius: 50,
+                                      titleStyle: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  ),
-                                  PieChartSectionData(
-                                    value: (stats['sleep_time'] as num?)
-                                            ?.toDouble() ??
-                                        0.0,
-                                    title: 'Sleep',
-                                    color: AppColors.primaryDark,
-                                    radius: 50,
-                                    titleStyle: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
+                                    PieChartSectionData(
+                                      value: (stats['idle_time'] as num?)
+                                              ?.toDouble() ??
+                                          0.0,
+                                      title: 'Idle',
+                                      color: AppColors.warning,
+                                      radius: 50,
+                                      titleStyle: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  ),
-                                ],
-                                sectionsSpace: 2,
-                                centerSpaceRadius: 40,
+                                    PieChartSectionData(
+                                      value: (stats['sleep_time'] as num?)
+                                              ?.toDouble() ??
+                                          0.0,
+                                      title: 'Sleep',
+                                      color: AppColors.secondary,
+                                      radius: 50,
+                                      titleStyle: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                  sectionsSpace: 2,
+                                  centerSpaceRadius: 40,
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: AppSpacing.lg),
-                          // Legend
-                          _LegendItem(
-                            color: AppColors.success,
-                            label: 'Active Time',
-                            value:
-                                _formatDuration(stats['active_time'] as int?),
-                          ),
-                          const SizedBox(height: AppSpacing.sm),
-                          _LegendItem(
-                            color: AppColors.warning,
-                            label: 'Idle Time',
-                            value: _formatDuration(stats['idle_time'] as int?),
-                          ),
-                          const SizedBox(height: AppSpacing.sm),
-                          _LegendItem(
-                            color: AppColors.primaryDark,
-                            label: 'Sleep Time',
-                            value: _formatDuration(stats['sleep_time'] as int?),
-                          ),
+                            const SizedBox(height: AppSpacing.lg),
+                            // Legend
+                            _LegendItem(
+                              color: AppColors.success,
+                              label: 'Active Time',
+                              value:
+                                  _formatDuration(stats['active_time'] as int?),
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            _LegendItem(
+                              color: AppColors.warning,
+                              label: 'Idle Time',
+                              value: _formatDuration(stats['idle_time'] as int?),
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            _LegendItem(
+                              color: AppColors.secondary,
+                              label: 'Sleep Time',
+                              value: _formatDuration(stats['sleep_time'] as int?),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -253,64 +270,76 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   const SizedBox(height: AppSpacing.lg),
 
                   // Statistics Cards
-                  GridView.count(
-                    crossAxisCount: 2,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    mainAxisSpacing: AppSpacing.md,
-                    crossAxisSpacing: AppSpacing.md,
-                    childAspectRatio: 1.3,
-                    children: [
-                      // Average Brightness
-                      _StatCard(
-                        icon: Icons.brightness_6,
-                        label: 'Avg Brightness',
-                        value:
-                            '${(stats['avg_brightness'] as num?)?.toStringAsFixed(1) ?? '0.0'}%',
-                        color: AppColors.accent,
-                        progress:
-                            (stats['avg_brightness'] as num?)?.toDouble() ??
-                                0.0,
-                        maxProgress: 100,
-                      ),
-                      // Presence Events
-                      _StatCard(
-                        icon: Icons.person,
-                        label: 'Presence Events',
-                        value: '${stats['presence_events'] as int? ?? 0}',
-                        color: AppColors.primary,
-                        progress:
-                            (stats['presence_events'] as int?)?.toDouble() ??
-                                0.0,
-                        maxProgress: 100,
-                        showProgress: false,
-                      ),
-                      // Energy Saving Time
-                      _StatCard(
-                        icon: Icons.eco,
-                        label: 'Energy Saving',
-                        value: _formatDuration(
-                            stats['energy_saving_time'] as int?),
-                        color: AppColors.success,
-                        progress:
-                            (stats['energy_saving_time'] as num?)?.toDouble() ??
-                                0.0,
-                        maxProgress: 86400, // 24 hours in seconds
-                        showProgress: true,
-                      ),
-                      // Total Active Time
-                      _StatCard(
-                        icon: Icons.access_time,
-                        label: 'Total Active',
-                        value: _formatDuration(stats['active_time'] as int?),
-                        color: AppColors.success,
-                        progress:
-                            (stats['active_time'] as num?)?.toDouble() ?? 0.0,
-                        maxProgress: 86400,
-                        showProgress: true,
-                      ),
-                    ],
-                  ),
+                  Builder(builder: (context) {
+                    double maxSeconds = 86400; // Day
+                    if (_selectedTimeRange == 'hour') {
+                      maxSeconds = 3600;
+                    } else if (_selectedTimeRange == 'week') {
+                      maxSeconds = 604800;
+                    }
+
+                    final energySavingTime =
+                        (stats['energy_saving_time'] as num?)?.toDouble() ?? 0.0;
+                    // Assuming 15W bulb
+                    final energySavedWh = (energySavingTime / 3600.0) * 15.0;
+                    final maxEnergySavedWh = (maxSeconds / 3600.0) * 15.0;
+                    
+                    return GridView.count(
+                      crossAxisCount: 2,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: AppSpacing.md,
+                      crossAxisSpacing: AppSpacing.md,
+                      childAspectRatio: 1.3,
+                      children: [
+                        // Average Brightness
+                        _StatCard(
+                          icon: Icons.brightness_6,
+                          label: 'Avg Brightness',
+                          value:
+                              '${(stats['avg_brightness'] as num?)?.toStringAsFixed(1) ?? '0.0'}%',
+                          color: AppColors.accent,
+                          progress:
+                              (stats['avg_brightness'] as num?)?.toDouble() ??
+                                  0.0,
+                          maxProgress: 100,
+                        ),
+                        // Presence Events
+                        _StatCard(
+                          icon: Icons.person,
+                          label: 'Presence Events',
+                          value: '${stats['presence_events'] as int? ?? 0}',
+                          color: isDark ? AppColors.secondary : AppColors.primary,
+                          progress:
+                              (stats['presence_events'] as int?)?.toDouble() ??
+                                  0.0,
+                          maxProgress: 100,
+                          showProgress: false,
+                        ),
+                        // Energy Saved
+                        _StatCard(
+                          icon: Icons.eco,
+                          label: 'Energy Saved',
+                          value: '${energySavedWh.toStringAsFixed(1)} Wh',
+                          color: AppColors.success,
+                          progress: energySavedWh,
+                          maxProgress: maxEnergySavedWh > 0 ? maxEnergySavedWh : 1,
+                          showProgress: true,
+                        ),
+                        // Total Active Time -> Active Time
+                        _StatCard(
+                          icon: Icons.access_time,
+                          label: 'Active Time',
+                          value: _formatDuration(stats['active_time'] as int?),
+                          color: AppColors.success,
+                          progress:
+                              (stats['active_time'] as num?)?.toDouble() ?? 0.0,
+                          maxProgress: maxSeconds,
+                          showProgress: true,
+                        ),
+                      ],
+                    );
+                  }),
                   const SizedBox(height: AppSpacing.lg),
 
                   // Brightness Over Time Chart
@@ -466,9 +495,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                           ),
                           const Divider(),
                           _SummaryRow(
-                            label: 'Energy Saving Time',
-                            value: _formatDuration(
-                                stats['energy_saving_time'] as int?),
+                            label: 'Energy Saved',
+                            value: '${((stats['energy_saving_time'] as num? ?? 0) / 3600.0 * 15.0).toStringAsFixed(1)} Wh',
                           ),
                           const Divider(),
                           _SummaryRow(
@@ -760,21 +788,23 @@ class _TimeRangeChip extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: selected
-              ? AppColors.primary
+              ? (isDark ? AppColors.secondary : AppColors.primary)
               : (isDark
-                  ? AppColors.darkCardBackground
+                  ? AppColors.primary
                   : AppColors.cardBackground),
           borderRadius: BorderRadius.circular(AppBorderRadius.md),
           border: Border.all(
             color: selected
-                ? AppColors.primary
-                : AppColors.textSecondary.withValues(alpha: 0.3),
+                ? Colors.transparent
+                : (isDark ? AppColors.primaryLight : AppColors.textSecondary.withValues(alpha: 0.3)),
           ),
         ),
         child: Text(
           label,
           style: AppTextStyles.bodySmall.copyWith(
-            color: selected ? Colors.white : AppColors.textSecondary,
+            color: selected
+                ? (isDark ? AppColors.primaryDark : Colors.white)
+                : (isDark ? Colors.white : AppColors.textSecondary),
             fontWeight: selected ? FontWeight.bold : FontWeight.normal,
           ),
         ),
