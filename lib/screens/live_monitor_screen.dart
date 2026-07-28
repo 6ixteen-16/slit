@@ -159,7 +159,7 @@ class _LiveMonitorScreenState extends State<LiveMonitorScreen> {
                     child: Row(
                       children: [
                         AnimatedLight(
-                          brightness: status.brightness,
+                          brightness: status.isConnected ? status.brightness : 0,
                           size: 80,
                         ),
                         const SizedBox(width: AppSpacing.lg),
@@ -180,9 +180,11 @@ class _LiveMonitorScreenState extends State<LiveMonitorScreen> {
                                   ),
                                   const SizedBox(width: AppSpacing.sm),
                                   Text(
-                                    status.presence
-                                        ? 'Presence Detected'
-                                        : 'No Presence',
+                                    status.isConnected
+                                        ? (status.presence
+                                            ? 'Presence Detected'
+                                            : 'No Presence')
+                                        : 'Unknown Presence',
                                     style: AppTextStyles.bodyLarge.copyWith(
                                       color: isDark
                                           ? AppColors.darkTextPrimary
@@ -195,15 +197,18 @@ class _LiveMonitorScreenState extends State<LiveMonitorScreen> {
                               const SizedBox(height: AppSpacing.sm),
                               // Mode and State
                               StateIndicator(
-                                state: status.mode,
-                                label: status.mode == OperatingMode.auto
-                                    ? 'Auto Mode'
-                                    : 'Manual Mode',
+                                state: status.isConnected ? status.mode : 'unknown',
+                                label: status.isConnected
+                                    ? (status.mode == OperatingMode.auto
+                                        ? 'Auto Mode'
+                                        : 'Manual Mode')
+                                    : 'Disconnected',
                                 showIcon: true,
                               ),
                               const SizedBox(height: AppSpacing.sm),
                               StateIndicator(
-                                state: status.state,
+                                state: status.isConnected ? status.state : 'offline',
+                                label: status.isConnected ? null : 'Offline',
                                 showIcon: true,
                               ),
                               const SizedBox(height: AppSpacing.sm),
@@ -247,7 +252,7 @@ class _LiveMonitorScreenState extends State<LiveMonitorScreen> {
                     SensorCard(
                       icon: Icons.light_mode,
                       label: 'Ambient Light',
-                      value: status.ambientLight.toStringAsFixed(1),
+                      value: status.isConnected ? status.ambientLight.toStringAsFixed(1) : '--',
                       unit: 'lux',
                       color: AppColors.warning,
                     ),
@@ -255,7 +260,7 @@ class _LiveMonitorScreenState extends State<LiveMonitorScreen> {
                     SensorCard(
                       icon: Icons.brightness_6,
                       label: 'Brightness',
-                      value: status.brightness.toString(),
+                      value: status.isConnected ? status.brightness.toString() : '--',
                       unit: '%',
                       color: AppColors.accent,
                     ),
@@ -263,7 +268,7 @@ class _LiveMonitorScreenState extends State<LiveMonitorScreen> {
                     SensorCard(
                       icon: Icons.tune,
                       label: 'PWM Value',
-                      value: status.pwmValue.toString(),
+                      value: status.isConnected ? status.pwmValue.toString() : '--',
                       color: AppColors.primary,
                     ),
                     // Connection

@@ -261,7 +261,10 @@ class SystemProvider with ChangeNotifier {
           _errorMessage = null;
         } catch (e2) {
           _errorMessage = 'Failed to fetch from both ThingSpeak and ESP32: $e2';
+          _systemStatus = _systemStatus.copyWith(connectionStatus: 'disconnected');
         }
+      } else {
+        _systemStatus = _systemStatus.copyWith(connectionStatus: 'disconnected');
       }
     } finally {
       _isLoadingStatus = false;

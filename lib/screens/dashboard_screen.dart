@@ -210,9 +210,11 @@ class _DashboardContentState extends State<_DashboardContent> {
                                 ),
                                 const SizedBox(width: AppSpacing.sm),
                                 Text(
-                                  status.presence
-                                      ? 'Presence Detected'
-                                      : 'No Presence',
+                                  status.isConnected
+                                      ? (status.presence
+                                          ? 'Presence Detected'
+                                          : 'No Presence')
+                                      : 'Unknown Presence',
                                   style: AppTextStyles.bodyLarge.copyWith(
                                     color: isDark
                                         ? AppColors.darkTextPrimary
@@ -225,10 +227,12 @@ class _DashboardContentState extends State<_DashboardContent> {
                             const SizedBox(height: AppSpacing.sm),
                             // Operating Mode
                             StateIndicator(
-                              state: status.mode,
-                              label: status.mode == OperatingMode.auto
-                                  ? 'Auto Mode'
-                                  : 'Manual Mode',
+                              state: status.isConnected ? status.mode : 'unknown',
+                              label: status.isConnected 
+                                  ? (status.mode == OperatingMode.auto
+                                      ? 'Auto Mode'
+                                      : 'Manual Mode')
+                                  : 'Disconnected',
                               showIcon: true,
                             ),
                             const SizedBox(height: AppSpacing.sm),
@@ -265,7 +269,7 @@ class _DashboardContentState extends State<_DashboardContent> {
                       SensorCard(
                         icon: Icons.light_mode,
                         label: 'Ambient Light',
-                        value: status.ambientLight.toStringAsFixed(1),
+                        value: status.isConnected ? status.ambientLight.toStringAsFixed(1) : '--',
                         unit: 'lux',
                         color: AppColors.warning,
                       ),
@@ -273,7 +277,7 @@ class _DashboardContentState extends State<_DashboardContent> {
                       SensorCard(
                         icon: Icons.brightness_6,
                         label: 'Brightness',
-                        value: status.brightness.toString(),
+                        value: status.isConnected ? status.brightness.toString() : '--',
                         unit: '%',
                         color: AppColors.accent,
                       ),
@@ -281,15 +285,15 @@ class _DashboardContentState extends State<_DashboardContent> {
                       SensorCard(
                         icon: Icons.tune,
                         label: 'PWM Value',
-                        value: status.pwmValue.toString(),
+                        value: status.isConnected ? status.pwmValue.toString() : '--',
                         color: AppColors.primary,
                       ),
                       // State Card
                       SensorCard(
                         icon: Icons.settings,
                         label: 'System State',
-                        value: _formatState(status.state),
-                        color: _getStateColor(status.state),
+                        value: status.isConnected ? _formatState(status.state) : 'Offline',
+                        color: status.isConnected ? _getStateColor(status.state) : AppColors.textDisabled,
                       ),
                     ],
                   ),
@@ -297,8 +301,8 @@ class _DashboardContentState extends State<_DashboardContent> {
                   
                   // Brightness Progress Card
                   BrightnessCard(
-                    brightness: status.brightness,
-                    label: 'Current Brightness',
+                    brightness: status.isConnected ? status.brightness : 0,
+                    label: status.isConnected ? 'Current Brightness' : 'Brightness (Disconnected)',
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   
