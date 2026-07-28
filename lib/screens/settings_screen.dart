@@ -18,7 +18,8 @@ import 'package:smart_light/widgets/custom_button.dart';
 ///
 /// Provides configuration options for system settings.
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key});
+  final VoidCallback? onBack;
+  const SettingsScreen({super.key, this.onBack});
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -46,6 +47,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: widget.onBack != null
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: widget.onBack,
+              )
+            : null,
         title: const Text('Settings'),
         elevation: 0,
         actions: [

@@ -43,16 +43,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: [
-          _DashboardContent(onTabSelected: _onTabSelected),
-          const LiveMonitorScreen(),
-          const ManualControlScreen(),
-          const SettingsScreen(),
-        ],
-      ),
+    return PopScope(
+      canPop: _selectedIndex == 0,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          _onTabSelected(0);
+        }
+      },
+      child: Scaffold(
+        body: IndexedStack(
+          index: _selectedIndex,
+          children: [
+            _DashboardContent(onTabSelected: _onTabSelected),
+            LiveMonitorScreen(onBack: () => _onTabSelected(0)),
+            ManualControlScreen(onBack: () => _onTabSelected(0)),
+            SettingsScreen(onBack: () => _onTabSelected(0)),
+          ],
+        ),
       bottomNavigationBar: Builder(
         builder: (context) {
           final isDark = Theme.of(context).brightness == Brightness.dark;

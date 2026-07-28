@@ -96,12 +96,8 @@ class CustomSlider extends StatelessWidget {
             valueIndicatorTextStyle: AppTextStyles.caption.copyWith(
               color: Colors.white,
             ),
-            disabledActiveTrackColor: isDark
-                ? AppColors.darkCardBackground
-                : AppColors.cardBackground,
-            disabledInactiveTrackColor: isDark
-                ? AppColors.darkCardBackground
-                : AppColors.cardBackground,
+            disabledActiveTrackColor: AppColors.textDisabled.withValues(alpha: 0.5),
+            disabledInactiveTrackColor: AppColors.textDisabled.withValues(alpha: 0.2),
             disabledThumbColor: isDark
                 ? AppColors.darkTextSecondary
                 : AppColors.textSecondary,

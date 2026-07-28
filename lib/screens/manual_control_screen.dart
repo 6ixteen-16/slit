@@ -20,7 +20,8 @@ import 'package:smart_light/widgets/animated_light.dart';
 /// 
 /// Provides mode switching and manual brightness control.
 class ManualControlScreen extends StatefulWidget {
-  const ManualControlScreen({super.key});
+  final VoidCallback? onBack;
+  const ManualControlScreen({super.key, this.onBack});
 
   @override
   State<ManualControlScreen> createState() => _ManualControlScreenState();
@@ -43,7 +44,13 @@ class _ManualControlScreenState extends State<ManualControlScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Manual Control'),
+        leading: widget.onBack != null
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: widget.onBack,
+              )
+            : null,
+        title: const Text('System Control'),
         elevation: 0,
         actions: [
           IconButton(
@@ -224,14 +231,12 @@ class _ManualControlScreenState extends State<ManualControlScreen> {
                         const SizedBox(height: AppSpacing.lg),
 
                         // Apply Button
-                        CustomButton(
+                        _GradientButton(
                           text: 'Apply Brightness',
                           icon: Icons.check,
                           onPressed: isConnected && isManualMode
                               ? () => _applyBrightness()
                               : null,
-                          variant: ButtonVariant.primary,
-                          fullWidth: true,
                           isLoading: _isSending,
                         ),
                       ],
@@ -417,7 +422,7 @@ class _ModeButton extends StatelessWidget {
   final String label;
   final IconData icon;
   final bool isSelected;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const _ModeButton({
     required this.label,
@@ -430,43 +435,54 @@ class _ModeButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    BoxDecoration decoration;
+    Color textColor;
+    Color iconColor;
+
+    if (isSelected) {
+      decoration = BoxDecoration(
+        borderRadius: BorderRadius.circular(AppBorderRadius.md),
+        color: isDark ? AppColors.secondary : null,
+        gradient: isDark
+            ? null
+            : const LinearGradient(
+                colors: [AppColors.secondary, AppColors.accent],
+              ),
+        border: Border.all(color: Colors.transparent, width: 2),
+      );
+      textColor = AppColors.primaryDark; // Dark text on light cyan
+      iconColor = AppColors.primaryDark;
+    } else {
+      decoration = BoxDecoration(
+        borderRadius: BorderRadius.circular(AppBorderRadius.md),
+        color: isDark ? AppColors.primary : AppColors.cardBackground,
+        border: Border.all(
+          color: isDark ? AppColors.primaryLight : AppColors.textDisabled.withValues(alpha: 0.3),
+          width: 2,
+        ),
+      );
+      textColor = isDark ? Colors.white : AppColors.textPrimary;
+      iconColor = isDark ? Colors.white : AppColors.primary;
+    }
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppBorderRadius.md),
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primary
-              : (isDark
-                  ? AppColors.darkCardBackground
-                  : AppColors.cardBackground),
-          borderRadius: BorderRadius.circular(AppBorderRadius.md),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.primary
-                : (isDark
-                    ? AppColors.darkCardBackground
-                    : AppColors.cardBackground),
-            width: 2,
-          ),
-        ),
+        decoration: decoration,
         child: Column(
           children: [
             Icon(
               icon,
-              color: isSelected ? Colors.white : AppColors.primary,
+              color: iconColor,
               size: 32,
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
               label,
               style: AppTextStyles.bodyMedium.copyWith(
-                color: isSelected
-                    ? Colors.white
-                    : (isDark
-                        ? AppColors.darkTextPrimary
-                        : AppColors.textPrimary),
+                color: textColor,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -493,6 +509,18 @@ class _PresetButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final decoration = BoxDecoration(
+      borderRadius: BorderRadius.circular(AppBorderRadius.sm),
+      color: isDark ? AppColors.secondary : null,
+      gradient: isDark
+          ? null
+          : const LinearGradient(
+              colors: [AppColors.secondary, AppColors.accent],
+            ),
+    );
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppBorderRadius.sm),
@@ -500,22 +528,98 @@ class _PresetButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(
           vertical: AppSpacing.sm,
         ),
-        decoration: BoxDecoration(
-          color: AppColors.primary.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(AppBorderRadius.sm),
-          border: Border.all(
-            color: AppColors.primary,
-            width: 1,
-          ),
-        ),
+        decoration: decoration,
         child: Center(
           child: Text(
             label,
             style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.primary,
+              color: AppColors.primaryDark,
               fontWeight: FontWeight.w600,
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Gradient Button
+///
+/// Internal widget replacing CustomButton for Apply Brightness
+/// to support gradients and specialized disabled states.
+class _GradientButton extends StatelessWidget {
+  final String text;
+  final IconData? icon;
+  final VoidCallback? onPressed;
+  final bool isLoading;
+
+  const _GradientButton({
+    required this.text,
+    this.icon,
+    this.onPressed,
+    this.isLoading = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final enabled = onPressed != null && !isLoading;
+
+    final decoration = enabled
+        ? BoxDecoration(
+            borderRadius: BorderRadius.circular(AppBorderRadius.card),
+            color: isDark ? AppColors.secondary : null,
+            gradient: isDark
+                ? null
+                : const LinearGradient(
+                    colors: [AppColors.secondary, AppColors.accent],
+                  ),
+          )
+        : BoxDecoration(
+            borderRadius: BorderRadius.circular(AppBorderRadius.card),
+            color: isDark ? Colors.white12 : Colors.black12,
+          );
+
+    return InkWell(
+      onTap: enabled ? onPressed : null,
+      borderRadius: BorderRadius.circular(AppBorderRadius.card),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.md,
+        ),
+        decoration: decoration,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (isLoading) ...[
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    enabled ? AppColors.primaryDark : AppColors.textDisabled,
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+            ] else if (icon != null) ...[
+              Icon(
+                icon,
+                size: 20,
+                color: enabled ? AppColors.primaryDark : AppColors.textDisabled,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+            ],
+            Text(
+              text,
+              style: AppTextStyles.button.copyWith(
+                color: enabled ? AppColors.primaryDark : AppColors.textDisabled,
+              ),
+            ),
+          ],
         ),
       ),
     );

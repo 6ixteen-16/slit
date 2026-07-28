@@ -23,16 +23,18 @@ import 'package:smart_light/config/thingspeak_config.dart';
 ///
 /// Displays current system metrics at the firmware telemetry cadence.
 class LiveMonitorScreen extends StatelessWidget {
-  const LiveMonitorScreen({super.key});
+  final VoidCallback? onBack;
+  const LiveMonitorScreen({super.key, this.onBack});
 
   @override
   Widget build(BuildContext context) {
-    return const _LiveMonitorView();
+    return _LiveMonitorView(onBack: onBack);
   }
 }
 
 class _LiveMonitorView extends StatelessWidget {
-  const _LiveMonitorView();
+  final VoidCallback? onBack;
+  const _LiveMonitorView({this.onBack});
 
   String _formatState(String state) {
     switch (state.toLowerCase()) {
@@ -63,6 +65,12 @@ class _LiveMonitorView extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
+            leading: onBack != null
+                ? IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: onBack,
+                  )
+                : null,
             title: const Text('Monitoring'),
             elevation: 0,
             actions: [
