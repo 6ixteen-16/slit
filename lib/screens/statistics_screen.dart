@@ -87,6 +87,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           }
 
           final stats = provider.statistics;
+          final feeds = provider.thingSpeakHistory?.feeds ?? const [];
 
           return RefreshIndicator(
             onRefresh: _refreshStatistics,
@@ -354,96 +355,163 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Brightness Trend',
+                            _brightnessTrendTitle(_selectedTimeRange),
                             style: AppTextStyles.headline3.copyWith(
                               color: isDark
                                   ? AppColors.darkTextPrimary
                                   : AppColors.textPrimary,
                             ),
                           ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            _brightnessTrendSubtitle(_selectedTimeRange),
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: isDark
+                                  ? AppColors.darkTextSecondary
+                                  : AppColors.textSecondary,
+                            ),
+                          ),
                           const SizedBox(height: AppSpacing.lg),
-                          SizedBox(
-                            height: 200,
-                            child: LineChart(
-                              LineChartData(
-                                gridData: FlGridData(
-                                  show: true,
-                                  drawVerticalLine: false,
-                                  horizontalInterval: 20,
-                                  getDrawingHorizontalLine: (value) {
-                                    return FlLine(
-                                      color: isDark
-                                          ? AppColors.darkCardBackground
-                                          : AppColors.cardBackground,
-                                      strokeWidth: 1,
-                                    );
-                                  },
+                          if (feeds.isEmpty)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                              child: Center(
+                                child: Text(
+                                  'No brightness data for this time range.',
+                                  style: AppTextStyles.bodyMedium.copyWith(
+                                    color: isDark
+                                        ? AppColors.darkTextSecondary
+                                        : AppColors.textSecondary,
+                                  ),
                                 ),
-                                titlesData: FlTitlesData(
-                                  show: true,
-                                  rightTitles: const AxisTitles(
-                                    sideTitles: SideTitles(showTitles: false),
-                                  ),
-                                  topTitles: const AxisTitles(
-                                    sideTitles: SideTitles(showTitles: false),
-                                  ),
-                                  bottomTitles: AxisTitles(
-                                    sideTitles: SideTitles(
-                                      showTitles: true,
-                                      getTitlesWidget: (value, meta) {
-                                        if (value.toInt() % 4 == 0) {
-                                          return Text(
-                                            '${value.toInt()}h',
-                                            style:
-                                                AppTextStyles.caption.copyWith(
-                                              color: isDark
-                                                  ? AppColors.darkTextSecondary
-                                                  : AppColors.textSecondary,
-                                            ),
-                                          );
-                                        }
-                                        return const Text('');
-                                      },
+                              ),
+                            )
+                          else
+                          SizedBox(
+                            height: 220,
+                            child: Builder(builder: (context) {
+                              final spots = _buildBrightnessSpots(feeds);
+                              final maxX = spots.isNotEmpty ? spots.last.x : 1.0;
+                              final xInterval = _xInterval(_selectedTimeRange);
+                              return LineChart(
+                                LineChartData(
+                                  gridData: FlGridData(
+                                    show: true,
+                                    drawVerticalLine: true,
+                                    horizontalInterval: 20,
+                                    verticalInterval: xInterval,
+                                    getDrawingHorizontalLine: (_) => FlLine(
+                                      color: isDark
+                                          ? Colors.white10
+                                          : Colors.black12,
+                                      strokeWidth: 1,
+                                    ),
+                                    getDrawingVerticalLine: (_) => FlLine(
+                                      color: isDark
+                                          ? Colors.white10
+                                          : Colors.black12,
+                                      strokeWidth: 1,
                                     ),
                                   ),
-                                  leftTitles: AxisTitles(
-                                    sideTitles: SideTitles(
-                                      showTitles: true,
-                                      interval: 20,
-                                      getTitlesWidget: (value, meta) {
-                                        return Text(
-                                          '${value.toInt()}%',
+                                  titlesData: FlTitlesData(
+                                    show: true,
+                                    rightTitles: const AxisTitles(
+                                      sideTitles: SideTitles(showTitles: false),
+                                    ),
+                                    topTitles: const AxisTitles(
+                                      sideTitles: SideTitles(showTitles: false),
+                                    ),
+                                    bottomTitles: AxisTitles(
+                                      axisNameWidget: Padding(
+                                        padding: const EdgeInsets.only(top: AppSpacing.xs),
+                                        child: Text(
+                                          _xAxisLabel(_selectedTimeRange),
                                           style: AppTextStyles.caption.copyWith(
                                             color: isDark
                                                 ? AppColors.darkTextSecondary
                                                 : AppColors.textSecondary,
                                           ),
-                                        );
-                                      },
+                                        ),
+                                      ),
+                                      axisNameSize: 20,
+                                      sideTitles: SideTitles(
+                                        showTitles: true,
+                                        interval: xInterval,
+                                        reservedSize: 28,
+                                        getTitlesWidget: (value, meta) {
+                                          final label = _formatXLabel(
+                                            value,
+                                            maxX,
+                                            _selectedTimeRange,
+                                          );
+                                          if (label.isEmpty) return const Text('');
+                                          return Padding(
+                                            padding: const EdgeInsets.only(top: 4),
+                                            child: Text(
+                                              label,
+                                              style: AppTextStyles.caption.copyWith(
+                                                color: isDark
+                                                    ? AppColors.darkTextSecondary
+                                                    : AppColors.textSecondary,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    leftTitles: AxisTitles(
+                                      axisNameWidget: Padding(
+                                        padding: const EdgeInsets.only(right: AppSpacing.xs),
+                                        child: Text(
+                                          'Brightness (%)',
+                                          style: AppTextStyles.caption.copyWith(
+                                            color: isDark
+                                                ? AppColors.darkTextSecondary
+                                                : AppColors.textSecondary,
+                                          ),
+                                        ),
+                                      ),
+                                      axisNameSize: 20,
+                                      sideTitles: SideTitles(
+                                        showTitles: true,
+                                        interval: 20,
+                                        reservedSize: 36,
+                                        getTitlesWidget: (value, meta) {
+                                          return Text(
+                                            '${value.toInt()}%',
+                                            style: AppTextStyles.caption.copyWith(
+                                              color: isDark
+                                                  ? AppColors.darkTextSecondary
+                                                  : AppColors.textSecondary,
+                                            ),
+                                          );
+                                        },
+                                      ),
                                     ),
                                   ),
+                                  borderData: FlBorderData(show: false),
+                                  lineBarsData: [
+                                    LineChartBarData(
+                                      spots: spots,
+                                      isCurved: true,
+                                      color: AppColors.accent,
+                                      barWidth: 2.5,
+                                      dotData: FlDotData(
+                                        show: spots.length < 30,
+                                      ),
+                                      belowBarData: BarAreaData(
+                                        show: true,
+                                        color: AppColors.accent.withValues(alpha: 0.15),
+                                      ),
+                                    ),
+                                  ],
+                                  minX: spots.isNotEmpty ? spots.first.x : 0,
+                                  maxX: maxX,
+                                  minY: 0,
+                                  maxY: 100,
                                 ),
-                                borderData: FlBorderData(show: false),
-                                lineBarsData: [
-                                  LineChartBarData(
-                                    spots: _generateBrightnessData(stats),
-                                    isCurved: true,
-                                    color: AppColors.accent,
-                                    barWidth: 3,
-                                    dotData: const FlDotData(show: false),
-                                    belowBarData: BarAreaData(
-                                      show: true,
-                                      color: AppColors.accent
-                                          .withValues(alpha: 0.2),
-                                    ),
-                                  ),
-                                ],
-                                minX: 0,
-                                maxX: 24,
-                                minY: 0,
-                                maxY: 100,
-                              ),
-                            ),
+                              );
+                            }),
                           ),
                         ],
                       ),
@@ -451,62 +519,90 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   ),
                   const SizedBox(height: AppSpacing.lg),
 
-                  // Summary Card
-                  Card(
-                    elevation: 1,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppBorderRadius.md),
-                    ),
-                    color: isDark
-                        ? AppColors.darkCardBackground
-                        : AppColors.cardBackground,
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppSpacing.md),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.info_outline,
-                                color: AppColors.primary,
-                              ),
-                              const SizedBox(width: AppSpacing.sm),
-                              Text(
-                                'Daily Summary',
-                                style: AppTextStyles.headline3.copyWith(
-                                  color: isDark
-                                      ? AppColors.darkTextPrimary
-                                      : AppColors.textPrimary,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: AppSpacing.md),
-                          _SummaryRow(
-                            label: 'Total Presence Events',
-                            value: '${stats['presence_events'] as int? ?? 0}',
-                          ),
-                          const Divider(),
-                          _SummaryRow(
-                            label: 'Average Brightness',
-                            value:
-                                '${(stats['avg_brightness'] as num?)?.toStringAsFixed(1) ?? '0.0'}%',
-                          ),
-                          const Divider(),
-                          _SummaryRow(
-                            label: 'Energy Saved',
-                            value: '${((stats['energy_saving_time'] as num? ?? 0) / 3600.0 * 15.0).toStringAsFixed(1)} Wh',
-                          ),
-                          const Divider(),
-                          _SummaryRow(
-                            label: 'Efficiency Score',
-                            value: '${_calculateEfficiency(stats)}%',
-                          ),
-                        ],
+                  // Summary Card - dynamic with time range
+                  Builder(builder: (context) {
+                    double maxSeconds = 86400;
+                    if (_selectedTimeRange == 'hour') maxSeconds = 3600;
+                    if (_selectedTimeRange == 'week') maxSeconds = 604800;
+                    final energySavingTime =
+                        (stats['energy_saving_time'] as num?)?.toDouble() ?? 0.0;
+                    final energySavedWh = (energySavingTime / 3600.0) * 15.0;
+                    final activeTime = (stats['active_time'] as num?)?.toDouble() ?? 0.0;
+                    final efficiency = maxSeconds > 0
+                        ? ((energySavingTime / maxSeconds) * 100).clamp(0, 100)
+                        : 0.0;
+                    final rangeLabel = _selectedTimeRange == 'hour'
+                        ? 'Hourly'
+                        : _selectedTimeRange == 'week'
+                            ? 'Weekly'
+                            : 'Daily';
+
+                    return Card(
+                      elevation: 1,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppBorderRadius.md),
                       ),
-                    ),
-                  ),
+                      color: isDark
+                          ? AppColors.darkCardBackground
+                          : AppColors.cardBackground,
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.info_outline,
+                                  color: isDark ? AppColors.secondary : AppColors.primary,
+                                ),
+                                const SizedBox(width: AppSpacing.sm),
+                                Text(
+                                  '$rangeLabel Summary',
+                                  style: AppTextStyles.headline3.copyWith(
+                                    color: isDark
+                                        ? AppColors.darkTextPrimary
+                                        : AppColors.textPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            _SummaryRow(
+                              label: 'Presence Events',
+                              value: '${stats['presence_events'] as int? ?? 0}',
+                            ),
+                            const Divider(),
+                            _SummaryRow(
+                              label: 'Avg Brightness',
+                              value:
+                                  '${(stats['avg_brightness'] as num?)?.toStringAsFixed(1) ?? '0.0'}%',
+                            ),
+                            const Divider(),
+                            _SummaryRow(
+                              label: 'Active Time',
+                              value: _formatDuration(activeTime.toInt()),
+                            ),
+                            const Divider(),
+                            _SummaryRow(
+                              label: 'Energy Saving Time',
+                              value: _formatDuration(energySavingTime.toInt()),
+                            ),
+                            const Divider(),
+                            _SummaryRow(
+                              label: 'Energy Saved',
+                              value: '${energySavedWh.toStringAsFixed(1)} Wh',
+                            ),
+                            const Divider(),
+                            _SummaryRow(
+                              label: 'Efficiency Score',
+                              value: '${efficiency.toStringAsFixed(1)}%',
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
                 ],
               ),
             ),
@@ -530,35 +626,66 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     }
   }
 
-  /// Generate sample brightness data for chart
-  List<FlSpot> _generateBrightnessData(Map<String, dynamic> stats) {
-    // In a real implementation, this would come from the ESP32
-    // For now, generate sample data
-    return [
-      const FlSpot(0, 0),
-      const FlSpot(4, 0),
-      const FlSpot(6, 50),
-      const FlSpot(8, 80),
-      const FlSpot(12, 100),
-      const FlSpot(14, 90),
-      const FlSpot(18, 70),
-      const FlSpot(20, 40),
-      const FlSpot(22, 20),
-      const FlSpot(24, 0),
-    ];
+  /// Chart helper: build real brightness spots from ThingSpeak feeds
+  List<FlSpot> _buildBrightnessSpots(List feeds) {
+    if (feeds.isEmpty) return [];
+    final first = feeds.first;
+    final firstTs = first.createdAt.millisecondsSinceEpoch.toDouble();
+    final List<FlSpot> spots = [];
+    for (final feed in feeds) {
+      final t = (feed.createdAt.millisecondsSinceEpoch.toDouble() - firstTs) / 1000.0;
+      final b = feed.getFieldAsDouble('brightness').clamp(0.0, 100.0);
+      spots.add(FlSpot(t, b));
+    }
+    return spots;
   }
 
-  /// Calculate efficiency score
-  double _calculateEfficiency(Map<String, dynamic> stats) {
-    final activeTime = (stats['active_time'] as num?)?.toDouble() ?? 0.0;
-    final energySavingTime =
-        (stats['energy_saving_time'] as num?)?.toDouble() ?? 0.0;
-    final totalTime = activeTime + energySavingTime;
-
-    if (totalTime == 0) return 0.0;
-
-    return ((energySavingTime / totalTime) * 100).clamp(0, 100);
+  /// X axis label formatter
+  String _formatXLabel(double x, double maxX, String range) {
+    if (range == 'hour') {
+      final mins = (x / 60).round();
+      if (mins % 10 != 0) return '';
+      return '${mins}m';
+    } else if (range == 'day') {
+      final hrs = (x / 3600).round();
+      if (hrs % 4 != 0) return '';
+      return '${hrs}h';
+    } else {
+      // week
+      final days = (x / 86400).round();
+      return 'D$days';
+    }
   }
+
+  /// X axis interval by range
+  double _xInterval(String range) {
+    if (range == 'hour') return 600; // every 10 min
+    if (range == 'day') return 14400; // every 4 h
+    return 86400; // every day
+  }
+
+  /// Dynamic chart title
+  String _brightnessTrendTitle(String range) {
+    if (range == 'hour') return 'Brightness – Last Hour';
+    if (range == 'week') return 'Brightness – Last 7 Days';
+    return 'Brightness – Last 24 Hours';
+  }
+
+  /// Dynamic chart subtitle
+  String _brightnessTrendSubtitle(String range) {
+    if (range == 'hour') return 'X axis: time in minutes';
+    if (range == 'week') return 'X axis: day number';
+    return 'X axis: time in hours';
+  }
+
+  /// X axis label text
+  String _xAxisLabel(String range) {
+    if (range == 'hour') return 'Time (minutes)';
+    if (range == 'week') return 'Day';
+    return 'Time (hours)';
+  }
+
+
 }
 
 /// Legend Item
@@ -640,6 +767,11 @@ class _StatCard extends StatelessWidget {
     final progressValue =
         showProgress ? (progress / maxProgress).clamp(0.0, 1.0) : 0.0;
 
+    // In light mode use accent so the small badge is clearly legible
+    final badgeColor = !isDark && color == AppColors.accent
+        ? AppColors.secondary
+        : color;
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -665,7 +797,7 @@ class _StatCard extends StatelessWidget {
                       vertical: AppSpacing.xs,
                     ),
                     decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.1),
+                      color: badgeColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(
                         AppBorderRadius.sm,
                       ),
@@ -673,7 +805,7 @@ class _StatCard extends StatelessWidget {
                     child: Text(
                       '${(progressValue * 100).toInt()}%',
                       style: AppTextStyles.caption.copyWith(
-                        color: color,
+                        color: badgeColor,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
