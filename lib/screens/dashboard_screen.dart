@@ -53,27 +53,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SettingsScreen(),
         ],
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: _onTabSelected,
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.dashboard),
-            label: 'Dashboard',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.monitor_heart),
-            label: 'Monitor',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.touch_app),
-            label: 'Control',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
-          ),
-        ],
+      bottomNavigationBar: Builder(
+        builder: (context) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final navIconColor = isDark ? null : AppColors.secondary;
+          return NavigationBar(
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: _onTabSelected,
+            destinations: [
+              NavigationDestination(
+                icon: Icon(Icons.dashboard, color: navIconColor),
+                label: 'Dashboard',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.monitor_heart, color: navIconColor),
+                label: 'Monitor',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.touch_app, color: navIconColor),
+                label: 'Control',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.settings, color: navIconColor),
+                label: 'Settings',
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -318,14 +324,16 @@ class _DashboardContentState extends State<_DashboardContent> {
                         icon: Icons.tune,
                         label: 'PWM Value',
                         value: status.isConnected ? status.pwmValue.toString() : '--',
-                        color: AppColors.primary,
+                        color: isDark ? AppColors.secondary : AppColors.primary,
                       ),
                       // State Card
                       SensorCard(
                         icon: Icons.settings,
                         label: 'System State',
                         value: status.isConnected ? _formatState(status.state) : 'Offline',
-                        color: status.isConnected ? _getStateColor(status.state) : AppColors.textDisabled,
+                        color: isDark
+                            ? AppColors.secondary
+                            : (status.isConnected ? _getStateColor(status.state) : AppColors.textDisabled),
                       ),
                     ],
                   ),
@@ -352,34 +360,12 @@ class _DashboardContentState extends State<_DashboardContent> {
                     children: [
                       Expanded(
                         child: _QuickActionButton(
-                          icon: Icons.monitor_heart,
-                          label: 'Live Monitor',
-                          onTap: () {
-                            widget.onTabSelected(1);
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: _QuickActionButton(
                           icon: Icons.touch_app,
                           label: 'Manual Control',
-                          onTap: () {
+                          onTap: () async {
+                            // Immediately switch to manual mode, then navigate
+                            await provider.setMode(OperatingMode.manual);
                             widget.onTabSelected(2);
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _QuickActionButton(
-                          icon: Icons.settings,
-                          label: 'Settings',
-                          onTap: () {
-                            widget.onTabSelected(3);
                           },
                         ),
                       ),
@@ -509,7 +495,7 @@ class _QuickActionButton extends StatelessWidget {
           children: [
             Icon(
               icon,
-              color: AppColors.primary,
+              color: isDark ? AppColors.secondary : AppColors.primary,
               size: 32,
             ),
             const SizedBox(height: AppSpacing.sm),
