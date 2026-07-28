@@ -63,6 +63,9 @@ class SystemProvider with ChangeNotifier {
   // Theme state
   ThemeMode _themeMode = ThemeMode.system;
 
+  // Pause state
+  bool _isPaused = false;
+
   // Loading states
   bool _isLoadingStatus = false;
   bool _isLoadingLogs = false;
@@ -112,6 +115,7 @@ class SystemProvider with ChangeNotifier {
   bool get useThingSpeak => _useThingSpeak;
   bool get isThingSpeakConnected => _isThingSpeakConnected;
   bool get isOffline => _isOffline;
+  bool get isPaused => _isPaused;
   String get esp32Host => _apiService.host;
 
   /// Check if system is connected
@@ -197,8 +201,20 @@ class SystemProvider with ChangeNotifier {
         _useThingSpeak ? ThingSpeakConfig.updateInterval : pollingInterval;
     _pollingTimer = Timer.periodic(
       Duration(milliseconds: interval),
-      (_) => refreshStatus(),
+      (_) { if (!_isPaused) refreshStatus(); },
     );
+  }
+
+  /// Pause live polling without cancelling the timer.
+  void pausePolling() {
+    _isPaused = true;
+    notifyListeners();
+  }
+
+  /// Resume live polling.
+  void resumePolling() {
+    _isPaused = false;
+    notifyListeners();
   }
 
   /// Stop polling

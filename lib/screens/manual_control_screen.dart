@@ -45,6 +45,15 @@ class _ManualControlScreenState extends State<ManualControlScreen> {
       appBar: AppBar(
         title: const Text('Manual Control'),
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
+            onPressed: () {
+              Provider.of<SystemProvider>(context, listen: false).toggleTheme();
+            },
+            tooltip: isDark ? 'Light Mode' : 'Dark Mode',
+          ),
+        ],
       ),
       body: Consumer<SystemProvider>(
         builder: (context, provider, child) {

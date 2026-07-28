@@ -50,6 +50,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         elevation: 0,
         actions: [
           IconButton(
+            icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
+            onPressed: () {
+              Provider.of<SystemProvider>(context, listen: false).toggleTheme();
+            },
+            tooltip: isDark ? 'Light Mode' : 'Dark Mode',
+          ),
+          IconButton(
             icon: const Icon(Icons.restore),
             onPressed: _restoreDefaults,
             tooltip: 'Restore Defaults',
