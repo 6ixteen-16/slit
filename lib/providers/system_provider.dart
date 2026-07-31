@@ -254,17 +254,67 @@ class SystemProvider with ChangeNotifier {
         _thingSpeakFeed = await _thingSpeakService.getLatestFeed();
         _isThingSpeakConnected = true;
 
+        final isFresh = _thingSpeakFeed != null &&
+            DateTime.now().difference(_thingSpeakFeed!.createdAt) < const Duration(minutes: 2);
+        final connectionStat = isFresh ? 'connected' : 'disconnected';
+
         // Convert ThingSpeak feed to SystemStatus
         final statusMap = _thingSpeakFeed!.toSystemStatus();
         _systemStatus = SystemStatus.fromJson(statusMap).copyWith(
           mode: _lastConfirmedMode,
           lastUpdated: DateTime.now(),
+          connectionStatus: connectionStat,
         );
+        _connectionStatus = connectionStat;
         _errorMessage = null;
+
+        if (_thingSpeakHistory != null && _thingSpeakFeed != null) {
+          final feeds = List<ThingSpeakFeed>.from(_thingSpeakHistory!.feeds);
+          if (feeds.isEmpty || feeds.last.entryId != _thingSpeakFeed!.entryId) {
+            feeds.add(_thingSpeakFeed!);
+            _thingSpeakHistory = ThingSpeakFeedResponse(
+              channel: _thingSpeakHistory!.channel,
+              feeds: feeds,
+            );
+            _statistics = _calculateStatisticsFromThingSpeak(feeds);
+          }
+        }
       } else {
         // Fallback to ESP32 direct connection
-        _systemStatus = (await _apiService.getSystemStatus()).copyWith(lastUpdated: DateTime.now());
+        final localStatus = await _apiService.getSystemStatus();
+        _systemStatus = localStatus.copyWith(lastUpdated: DateTime.now());
+        
+        try {
+          _statistics = await _apiService.getStatistics();
+        } catch (_) {}
+        
         _errorMessage = null;
+
+        final localFeed = ThingSpeakFeed(
+          createdAt: DateTime.now(),
+          fields: {
+             'brightness': localStatus.brightness,
+             'presence': localStatus.presence ? 1 : 0,
+             'system_state': localStatus.state,
+          }
+        );
+        if (_thingSpeakHistory == null) {
+           _thingSpeakHistory = ThingSpeakFeedResponse(
+              channel: const ThingSpeakChannel(id: 0, name: 'Local', fieldNames: {}),
+              feeds: [localFeed],
+           );
+        } else {
+           final feeds = List<ThingSpeakFeed>.from(_thingSpeakHistory!.feeds);
+           feeds.add(localFeed);
+           if (feeds.length > 5760) feeds.removeAt(0);
+           _thingSpeakHistory = ThingSpeakFeedResponse(
+              channel: _thingSpeakHistory!.channel,
+              feeds: feeds,
+           );
+           if (_statistics.isEmpty) {
+             _statistics = _calculateStatisticsFromThingSpeak(feeds);
+           }
+        }
       }
     } catch (e) {
       _isThingSpeakConnected = false;
@@ -278,9 +328,11 @@ class SystemProvider with ChangeNotifier {
         } catch (e2) {
           _errorMessage = 'Failed to fetch from both ThingSpeak and ESP32: $e2';
           _systemStatus = _systemStatus.copyWith(connectionStatus: 'disconnected');
+          _connectionStatus = 'disconnected';
         }
       } else {
         _systemStatus = _systemStatus.copyWith(connectionStatus: 'disconnected');
+        _connectionStatus = 'disconnected';
       }
     } finally {
       _isLoadingStatus = false;

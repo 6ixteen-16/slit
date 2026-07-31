@@ -12,6 +12,7 @@ import 'package:provider/provider.dart';
 import 'package:smart_light/providers/system_provider.dart';
 import 'package:smart_light/utils/constants.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 
 /// Statistics Screen
 ///
@@ -144,9 +145,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                               label: 'Day',
                               selected: _selectedTimeRange == 'day',
                               onTap: () {
-                                setState(() {
-                                  _selectedTimeRange = 'day';
-                                });
+                                setState(() => _selectedTimeRange = 'day');
                                 _refreshStatistics();
                               },
                             ),
@@ -154,9 +153,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                               label: 'Week',
                               selected: _selectedTimeRange == 'week',
                               onTap: () {
-                                setState(() {
-                                  _selectedTimeRange = 'week';
-                                });
+                                setState(() => _selectedTimeRange = 'week');
                                 _refreshStatistics();
                               },
                             ),
@@ -399,7 +396,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                             height: 220,
                             child: Builder(builder: (context) {
                               final spots = _buildBrightnessSpots(feeds);
-                              final maxX = spots.isNotEmpty ? spots.last.x : 1.0;
+                              double maxX = spots.isNotEmpty ? spots.last.x : 1.0;
+                              final minX = spots.isNotEmpty ? spots.first.x : 0.0;
+                              if (maxX == minX) maxX += 1.0;
                               final xInterval = _xInterval(_selectedTimeRange);
                               return LineChart(
                                 LineChartData(
@@ -430,34 +429,30 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                       sideTitles: SideTitles(showTitles: false),
                                     ),
                                     bottomTitles: AxisTitles(
-                                      axisNameWidget: Padding(
-                                        padding: const EdgeInsets.only(top: AppSpacing.xs),
-                                        child: Text(
-                                          _xAxisLabel(_selectedTimeRange),
-                                          style: AppTextStyles.caption.copyWith(
-                                            color: isDark
-                                                ? AppColors.darkTextSecondary
-                                                : AppColors.textSecondary,
-                                          ),
-                                        ),
-                                      ),
-                                      axisNameSize: 20,
                                       sideTitles: SideTitles(
                                         showTitles: true,
                                         interval: xInterval,
-                                        reservedSize: 28,
+                                        reservedSize: 42,
                                         getTitlesWidget: (value, meta) {
+                                          // Skip the very first and very last to
+                                          // avoid clipping at chart boundaries
+                                          if (value == meta.min || value == meta.max) {
+                                            return const SizedBox.shrink();
+                                          }
                                           final label = _formatXLabel(
                                             value,
                                             maxX,
                                             _selectedTimeRange,
                                           );
-                                          if (label.isEmpty) return const Text('');
-                                          return Padding(
-                                            padding: const EdgeInsets.only(top: 4),
+                                          if (label.isEmpty) return const SizedBox.shrink();
+                                          return SideTitleWidget(
+                                            axisSide: meta.axisSide,
+                                            angle: -0.7,
+                                            space: 4,
                                             child: Text(
                                               label,
                                               style: AppTextStyles.caption.copyWith(
+                                                fontSize: 9,
                                                 color: isDark
                                                     ? AppColors.darkTextSecondary
                                                     : AppColors.textSecondary,
@@ -513,10 +508,27 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                       ),
                                     ),
                                   ],
-                                  minX: spots.isNotEmpty ? spots.first.x : 0,
+                                  minX: minX,
                                   maxX: maxX,
                                   minY: 0,
                                   maxY: 100,
+                                  lineTouchData: LineTouchData(
+                                    touchTooltipData: LineTouchTooltipData(
+                                      getTooltipItems: (touchedSpots) {
+                                        return touchedSpots.map((spot) {
+                                          final dt = DateTime.fromMillisecondsSinceEpoch(spot.x.toInt());
+                                          return LineTooltipItem(
+                                            '${DateFormat('HH:mm').format(dt)}\n${spot.y.toStringAsFixed(0)}%',
+                                            const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          );
+                                        }).toList();
+                                      },
+                                    ),
+                                  ),
                                 ),
                               );
                             }),
@@ -525,7 +537,143 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.lg),
+                   const SizedBox(height: AppSpacing.lg),
+
+                   // Ambient Light Over Time
+                   if (feeds.isNotEmpty)
+                     Builder(builder: (context) {
+                       final ambSpots = _buildAmbientLightSpots(feeds);
+                       if (ambSpots.isEmpty) return const SizedBox.shrink();
+                       double maxAmbX = ambSpots.last.x;
+                       final minAmbX = ambSpots.first.x;
+                       if (maxAmbX == minAmbX) maxAmbX += 1.0;
+                       final maxAmbY = ambSpots.map((s) => s.y).reduce((a, b) => a > b ? a : b);
+                       final yMax = maxAmbY < 10 ? 10.0 : (maxAmbY * 1.2);
+                       final xIntvl = _xInterval(_selectedTimeRange);
+                       return Card(
+                         elevation: 2,
+                         shape: RoundedRectangleBorder(
+                           borderRadius: BorderRadius.circular(AppBorderRadius.md),
+                         ),
+                         child: Padding(
+                           padding: const EdgeInsets.all(AppSpacing.md),
+                           child: Column(
+                             crossAxisAlignment: CrossAxisAlignment.start,
+                             children: [
+                               Text(
+                                 'Ambient Light (lux)',
+                                 style: AppTextStyles.headline3.copyWith(
+                                   color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                                 ),
+                               ),
+                               Text(
+                                 'How bright the room was over time',
+                                 style: AppTextStyles.bodySmall.copyWith(
+                                   color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                                 ),
+                               ),
+                               const SizedBox(height: AppSpacing.lg),
+                               SizedBox(
+                                 height: 200,
+                                 child: LineChart(
+                                   LineChartData(
+                                     gridData: FlGridData(
+                                       show: true,
+                                       drawVerticalLine: false,
+                                       getDrawingHorizontalLine: (_) => FlLine(
+                                         color: isDark ? Colors.white10 : Colors.black12,
+                                         strokeWidth: 1,
+                                       ),
+                                     ),
+                                     titlesData: FlTitlesData(
+                                       rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                       topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                       bottomTitles: AxisTitles(
+                                         sideTitles: SideTitles(
+                                           showTitles: true,
+                                           interval: xIntvl,
+                                           reservedSize: 42,
+                                           getTitlesWidget: (value, meta) {
+                                             if (value == meta.min || value == meta.max) return const SizedBox.shrink();
+                                             final dt = DateTime.fromMillisecondsSinceEpoch(value.toInt());
+                                             return SideTitleWidget(
+                                               axisSide: meta.axisSide,
+                                               angle: -0.7,
+                                               space: 4,
+                                               child: Text(
+                                                 DateFormat('HH:mm').format(dt),
+                                                 style: AppTextStyles.caption.copyWith(
+                                                   fontSize: 9,
+                                                   color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                                                 ),
+                                               ),
+                                             );
+                                           },
+                                         ),
+                                       ),
+                                       leftTitles: AxisTitles(
+                                         sideTitles: SideTitles(
+                                           showTitles: true,
+                                           reservedSize: 44,
+                                           getTitlesWidget: (value, meta) {
+                                             return Text(
+                                               '${value.toInt()}lx',
+                                               style: AppTextStyles.caption.copyWith(
+                                                 fontSize: 9,
+                                                 color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                                               ),
+                                             );
+                                           },
+                                         ),
+                                       ),
+                                     ),
+                                     borderData: FlBorderData(show: false),
+                                     lineBarsData: [
+                                       LineChartBarData(
+                                         spots: ambSpots,
+                                         isCurved: true,
+                                         color: AppColors.warning,
+                                         barWidth: 2.5,
+                                         dotData: const FlDotData(show: false),
+                                         belowBarData: BarAreaData(
+                                           show: true,
+                                           color: AppColors.warning.withValues(alpha: 0.12),
+                                         ),
+                                       ),
+                                     ],
+                                     minX: minAmbX,
+                                     maxX: maxAmbX,
+                                     minY: 0,
+                                     maxY: yMax,
+                                     lineTouchData: LineTouchData(
+                                       touchTooltipData: LineTouchTooltipData(
+                                         getTooltipItems: (spots) => spots.map((s) {
+                                           final dt = DateTime.fromMillisecondsSinceEpoch(s.x.toInt());
+                                           return LineTooltipItem(
+                                             '${DateFormat('HH:mm').format(dt)}\n${s.y.toStringAsFixed(1)} lux',
+                                             const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                                           );
+                                         }).toList(),
+                                       ),
+                                     ),
+                                   ),
+                                 ),
+                               ),
+                             ],
+                           ),
+                         ),
+                       );
+                     }),
+                   const SizedBox(height: AppSpacing.lg),
+
+                   // Presence Activity Timeline
+                   if (feeds.isNotEmpty)
+                     _PresenceTimeline(
+                       feeds: feeds,
+                       isDark: isDark,
+                     ),
+                   if (feeds.isNotEmpty)
+                     const SizedBox(height: AppSpacing.lg),
 
                   // Summary Card - dynamic with time range
                   Builder(builder: (context) {
@@ -634,42 +782,48 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     }
   }
 
-  /// Chart helper: build real brightness spots from ThingSpeak feeds
+  /// Chart helper: build brightness spots from feeds
   List<FlSpot> _buildBrightnessSpots(List feeds) {
     if (feeds.isEmpty) return [];
-    final first = feeds.first;
-    final firstTs = first.createdAt.millisecondsSinceEpoch.toDouble();
     final List<FlSpot> spots = [];
     for (final feed in feeds) {
-      final t = (feed.createdAt.millisecondsSinceEpoch.toDouble() - firstTs) / 1000.0;
+      final t = feed.createdAt.millisecondsSinceEpoch.toDouble();
       final b = feed.getFieldAsDouble('brightness').clamp(0.0, 100.0);
       spots.add(FlSpot(t, b));
     }
     return spots;
   }
 
-  /// X axis label formatter
-  String _formatXLabel(double x, double maxX, String range) {
-    if (range == 'hour') {
-      final mins = (x / 60).round();
-      if (mins % 10 != 0) return '';
-      return '${mins}m';
-    } else if (range == 'day') {
-      final hrs = (x / 3600).round();
-      if (hrs % 4 != 0) return '';
-      return '${hrs}h';
-    } else {
-      // week
-      final days = (x / 86400).round();
-      return 'D$days';
+  /// Chart helper: build ambient light spots from feeds
+  List<FlSpot> _buildAmbientLightSpots(List feeds) {
+    if (feeds.isEmpty) return [];
+    final List<FlSpot> spots = [];
+    for (final feed in feeds) {
+      final t = feed.createdAt.millisecondsSinceEpoch.toDouble();
+      final lux = feed.getFieldAsDouble('ambient_light');
+      if (lux > 0 || spots.isNotEmpty) {
+        spots.add(FlSpot(t, lux));
+      }
     }
+    return spots;
   }
 
-  /// X axis interval by range
+  /// X axis label formatter — uses actual DateTime for readability
+  String _formatXLabel(double x, double maxX, String range) {
+    final dateTime = DateTime.fromMillisecondsSinceEpoch(x.toInt());
+    if (range == 'week') {
+      // Show abbreviated day name (Sun, Mon, …, Sat)
+      return DateFormat('E').format(dateTime);
+    }
+    // hour & day: show HH:mm
+    return DateFormat('HH:mm').format(dateTime);
+  }
+
+  /// X axis interval in milliseconds by range
   double _xInterval(String range) {
-    if (range == 'hour') return 600; // every 10 min
-    if (range == 'day') return 14400; // every 4 h
-    return 86400; // every day
+    if (range == 'hour') return 10 * 60 * 1000.0;       // every 10 min
+    if (range == 'week') return 24 * 60 * 60 * 1000.0;  // every day
+    return 4 * 60 * 60 * 1000.0;                         // every 4 h (day)
   }
 
   /// Dynamic chart title
@@ -679,21 +833,123 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     return 'Brightness – Last 24 Hours';
   }
 
-  /// Dynamic chart subtitle
   String _brightnessTrendSubtitle(String range) {
-    if (range == 'hour') return 'X axis: time in minutes';
-    if (range == 'week') return 'X axis: day number';
-    return 'X axis: time in hours';
+    if (range == 'week') return 'X axis: day of week (Sun – Sat)';
+    return 'X axis: actual time';
   }
 
-  /// X axis label text
   String _xAxisLabel(String range) {
-    if (range == 'hour') return 'Time (minutes)';
     if (range == 'week') return 'Day';
-    return 'Time (hours)';
+    return 'Time';
   }
 
 
+}
+
+/// Presence Activity Timeline Widget
+///
+/// Shows a compact horizontal timeline strip where filled segments
+/// indicate presence-detected intervals. This gives a lay user an
+/// intuitive at-a-glance view of when the room was occupied.
+class _PresenceTimeline extends StatelessWidget {
+  final List feeds;
+  final bool isDark;
+
+  const _PresenceTimeline({required this.feeds, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    if (feeds.isEmpty) return const SizedBox.shrink();
+
+    final firstTs = feeds.first.createdAt.millisecondsSinceEpoch;
+    final lastTs = feeds.last.createdAt.millisecondsSinceEpoch;
+    final span = (lastTs - firstTs).toDouble();
+    if (span <= 0) return const SizedBox.shrink();
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppBorderRadius.md),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Presence Activity',
+              style: AppTextStyles.headline3.copyWith(
+                color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+              ),
+            ),
+            Text(
+              'Green = someone present, grey = empty room',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppBorderRadius.sm),
+              child: SizedBox(
+                height: 28,
+                child: LayoutBuilder(
+                  builder: (ctx, constraints) {
+                    final totalWidth = constraints.maxWidth;
+                    return Stack(
+                      children: [
+                        // Background
+                        Container(
+                          width: totalWidth,
+                          height: 28,
+                          color: isDark
+                              ? AppColors.darkCardBackground
+                              : AppColors.cardBackground,
+                        ),
+                        // Presence segments
+                        for (int i = 0; i < feeds.length - 1; i++)
+                          if (feeds[i].getFieldAsBool('presence'))
+                            Positioned(
+                              left: ((feeds[i].createdAt.millisecondsSinceEpoch - firstTs) / span) * totalWidth,
+                              width: ((feeds[i + 1].createdAt.millisecondsSinceEpoch - feeds[i].createdAt.millisecondsSinceEpoch) / span) * totalWidth + 1,
+                              top: 0,
+                              bottom: 0,
+                              child: Container(
+                                color: AppColors.success.withValues(alpha: 0.75),
+                              ),
+                            ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            // Time labels: start and end
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  DateFormat('HH:mm').format(feeds.first.createdAt),
+                  style: AppTextStyles.caption.copyWith(
+                    fontSize: 9,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                  ),
+                ),
+                Text(
+                  DateFormat('HH:mm').format(feeds.last.createdAt),
+                  style: AppTextStyles.caption.copyWith(
+                    fontSize: 9,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 /// Legend Item
