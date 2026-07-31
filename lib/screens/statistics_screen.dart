@@ -395,18 +395,16 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                           SizedBox(
                             height: 220,
                             child: Builder(builder: (context) {
-                              final spots = _buildBrightnessSpots(feeds);
-                              double maxX = spots.isNotEmpty ? spots.last.x : 1.0;
-                              final minX = spots.isNotEmpty ? spots.first.x : 0.0;
-                              if (maxX == minX) maxX += 1.0;
-                              final xInterval = _xInterval(_selectedTimeRange);
+                              final spotData = _buildBrightnessSpots(feeds);
+                              final spots = spotData.spots;
+                              final timestamps = spotData.timestamps;
+                              final maxX = spots.length.toDouble() - 1;
                               return LineChart(
                                 LineChartData(
                                   gridData: FlGridData(
                                     show: true,
                                     drawVerticalLine: true,
                                     horizontalInterval: 20,
-                                    verticalInterval: xInterval,
                                     getDrawingHorizontalLine: (_) => FlLine(
                                       color: isDark
                                           ? Colors.white10
@@ -431,20 +429,21 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                     bottomTitles: AxisTitles(
                                       sideTitles: SideTitles(
                                         showTitles: true,
-                                        interval: xInterval,
                                         reservedSize: 42,
                                         getTitlesWidget: (value, meta) {
-                                          // Skip the very first and very last to
-                                          // avoid clipping at chart boundaries
-                                          if (value == meta.min || value == meta.max) {
+                                          final idx = value.toInt();
+                                          if (idx < 0 || idx >= spots.length) {
                                             return const SizedBox.shrink();
                                           }
-                                          final label = _formatXLabel(
-                                            value,
-                                            maxX,
-                                            _selectedTimeRange,
-                                          );
-                                          if (label.isEmpty) return const SizedBox.shrink();
+                                          // Show ~6 evenly spaced labels
+                                          final step = (spots.length / 6).ceil().clamp(1, spots.length);
+                                          if (idx % step != 0 && idx != spots.length - 1) {
+                                            return const SizedBox.shrink();
+                                          }
+                                          final dt = timestamps[idx];
+                                          final label = _selectedTimeRange == 'week'
+                                              ? DateFormat('E').format(dt)
+                                              : DateFormat('HH:mm').format(dt);
                                           return SideTitleWidget(
                                             axisSide: meta.axisSide,
                                             angle: -0.7,
@@ -496,7 +495,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                   lineBarsData: [
                                     LineChartBarData(
                                       spots: spots,
-                                      isCurved: true,
+                                      isCurved: false,
                                       color: AppColors.accent,
                                       barWidth: 2.5,
                                       dotData: FlDotData(
@@ -516,7 +515,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                     touchTooltipData: LineTouchTooltipData(
                                       getTooltipItems: (touchedSpots) {
                                         return touchedSpots.map((spot) {
-                                          final dt = DateTime.fromMillisecondsSinceEpoch(spot.x.toInt());
+                                          final idx = spot.x.toInt();
+                                          if (idx < 0 || idx >= timestamps.length) return null;
+                                          final dt = timestamps[idx];
                                           return LineTooltipItem(
                                             '${DateFormat('HH:mm').format(dt)}\n${spot.y.toStringAsFixed(0)}%',
                                             const TextStyle(
@@ -525,7 +526,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                               fontWeight: FontWeight.w600,
                                             ),
                                           );
-                                        }).toList();
+                                        }).whereType<LineTooltipItem>().toList();
                                       },
                                     ),
                                   ),
@@ -542,7 +543,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                    // Ambient Light Over Time — Bar Chart
                    if (feeds.isNotEmpty)
                      Builder(builder: (context) {
-                       final ambSpots = _buildAmbientLightSpots(feeds);
+                       final ambSpotData = _buildAmbientLightSpots(feeds);
+                       final ambSpots = ambSpotData.spots;
+                       final ambTimestamps = ambSpotData.timestamps;
                        if (ambSpots.isEmpty) return const SizedBox.shrink();
                        final maxAmbY = ambSpots.map((s) => s.y).reduce((a, b) => a > b ? a : b);
                        final yMax = maxAmbY < 10 ? 10.0 : (maxAmbY * 1.2);
@@ -580,10 +583,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                      barTouchData: BarTouchData(
                                        touchTooltipData: BarTouchTooltipData(
                                          getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                                           if (groupIndex >= ambSpots.length) return null;
-                                           final dt = DateTime.fromMillisecondsSinceEpoch(
-                                             ambSpots[groupIndex].x.toInt(),
-                                           );
+                                           if (groupIndex >= ambTimestamps.length) return null;
+                                           final dt = ambTimestamps[groupIndex];
                                            final label = _selectedTimeRange == 'week'
                                                ? DateFormat('E').format(dt)
                                                : DateFormat('HH:mm').format(dt);
@@ -622,9 +623,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                                  idx != ambSpots.length - 1) {
                                                return const SizedBox.shrink();
                                              }
-                                             final dt = DateTime.fromMillisecondsSinceEpoch(
-                                               ambSpots[idx].x.toInt(),
-                                             );
+                                             final dt = ambTimestamps[idx];
                                              final label = _selectedTimeRange == 'week'
                                                  ? DateFormat('E').format(dt)
                                                  : DateFormat('HH:mm').format(dt);
@@ -835,15 +834,15 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
   /// Sorts [feeds] by timestamp, removes entries with duplicate timestamps,
   /// then averages [getValue] within fixed time buckets of [bucketMs].
-  /// Returns at most [maxPoints] evenly sampled spots.
-  List<FlSpot> _buildSpots(
+  /// Returns a record with evenly sampled spots and parallel timestamps.
+  ({List<FlSpot> spots, List<DateTime> timestamps}) _buildSpots(
     List feeds,
     double Function(dynamic feed) getValue, {
     required String range,
     double clampMin = 0.0,
     double clampMax = double.infinity,
   }) {
-    if (feeds.isEmpty) return [];
+    if (feeds.isEmpty) return (spots: <FlSpot>[], timestamps: <DateTime>[]);
 
     // 1. Sort ascending by timestamp
     final sorted = [...feeds]
@@ -867,18 +866,23 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       buckets.putIfAbsent(bucket, () => []).add(v.clamp(clampMin, clampMax));
     }
 
-    if (buckets.isEmpty) return [];
+    if (buckets.isEmpty) return (spots: <FlSpot>[], timestamps: <DateTime>[]);
 
     // 4. Build sorted averaged spots
     final keys = buckets.keys.toList()..sort();
-    return keys.map((k) {
+    final spots = <FlSpot>[];
+    final timestamps = <DateTime>[];
+    for (int i = 0; i < keys.length; i++) {
+      final k = keys[i];
       final avg = buckets[k]!.reduce((a, b) => a + b) / buckets[k]!.length;
-      return FlSpot(k.toDouble(), avg);
-    }).toList();
+      spots.add(FlSpot(i.toDouble(), avg));
+      timestamps.add(DateTime.fromMillisecondsSinceEpoch(k));
+    }
+    return (spots: spots, timestamps: timestamps);
   }
 
   /// Build brightness spots (0–100%).
-  List<FlSpot> _buildBrightnessSpots(List feeds) => _buildSpots(
+  ({List<FlSpot> spots, List<DateTime> timestamps}) _buildBrightnessSpots(List feeds) => _buildSpots(
         feeds,
         (f) => f.getFieldAsDouble('brightness'),
         range: _selectedTimeRange,
@@ -887,28 +891,12 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       );
 
   /// Build ambient-light spots (lux, unbounded above).
-  List<FlSpot> _buildAmbientLightSpots(List feeds) => _buildSpots(
+  ({List<FlSpot> spots, List<DateTime> timestamps}) _buildAmbientLightSpots(List feeds) => _buildSpots(
         feeds,
         (f) => f.getFieldAsDouble('ambient_light'),
         range: _selectedTimeRange,
         clampMin: 0.0,
       );
-
-  /// X axis label — real clock time or day name for week.
-  String _formatXLabel(double x, double maxX, String range) {
-    final dt = DateTime.fromMillisecondsSinceEpoch(x.toInt());
-    if (range == 'week') return DateFormat('E').format(dt);  // Mon, Tue …
-    return DateFormat('HH:mm').format(dt);
-  }
-
-  /// X axis tick interval in ms, chosen so we get ~6–7 ticks regardless
-  /// of how much data is in the range.
-  double _xInterval(String range) {
-    // Target exactly 6 ticks across the visible window
-    if (range == 'hour') return 10 * 60 * 1000.0;       // 6 × 10 min = 1 h
-    if (range == 'week') return 24 * 60 * 60 * 1000.0;  // 7 × 1 day  = 1 wk
-    return 4 * 60 * 60 * 1000.0;                         // 6 × 4 h   = 24 h
-  }
 
   /// Dynamic chart title
   String _brightnessTrendTitle(String range) {
