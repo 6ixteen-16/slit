@@ -782,48 +782,92 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     }
   }
 
-  /// Chart helper: build brightness spots from feeds
-  List<FlSpot> _buildBrightnessSpots(List feeds) {
-    if (feeds.isEmpty) return [];
-    final List<FlSpot> spots = [];
-    for (final feed in feeds) {
-      final t = feed.createdAt.millisecondsSinceEpoch.toDouble();
-      final b = feed.getFieldAsDouble('brightness').clamp(0.0, 100.0);
-      spots.add(FlSpot(t, b));
-    }
-    return spots;
+  // ---------------------------------------------------------------------------
+  // Data processing helpers
+  // ---------------------------------------------------------------------------
+
+  /// Bucket size in milliseconds for each time range.
+  int _bucketMs(String range) {
+    if (range == 'hour') return 5 * 60 * 1000;         // 5-min buckets
+    if (range == 'week') return 3 * 60 * 60 * 1000;    // 3-hour buckets
+    return 15 * 60 * 1000;                              // 15-min buckets (day)
   }
 
-  /// Chart helper: build ambient light spots from feeds
-  List<FlSpot> _buildAmbientLightSpots(List feeds) {
+  /// Sorts [feeds] by timestamp, removes entries with duplicate timestamps,
+  /// then averages [getValue] within fixed time buckets of [bucketMs].
+  /// Returns at most [maxPoints] evenly sampled spots.
+  List<FlSpot> _buildSpots(
+    List feeds,
+    double Function(dynamic feed) getValue, {
+    required String range,
+    double clampMin = 0.0,
+    double clampMax = double.infinity,
+  }) {
     if (feeds.isEmpty) return [];
-    final List<FlSpot> spots = [];
-    for (final feed in feeds) {
-      final t = feed.createdAt.millisecondsSinceEpoch.toDouble();
-      final lux = feed.getFieldAsDouble('ambient_light');
-      if (lux > 0 || spots.isNotEmpty) {
-        spots.add(FlSpot(t, lux));
-      }
+
+    // 1. Sort ascending by timestamp
+    final sorted = [...feeds]
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+    // 2. Remove duplicate timestamps (keep last seen)
+    final Map<int, dynamic> deduped = {};
+    for (final f in sorted) {
+      deduped[f.createdAt.millisecondsSinceEpoch] = f;
     }
-    return spots;
+    final unique = deduped.values.toList();
+
+    // 3. Bucket into fixed intervals and average
+    final bms = _bucketMs(range);
+    final Map<int, List<double>> buckets = {};
+    for (final f in unique) {
+      final ms = f.createdAt.millisecondsSinceEpoch;
+      final bucket = (ms ~/ bms) * bms;
+      final v = getValue(f);
+      if (v.isNaN || v.isInfinite) continue;
+      buckets.putIfAbsent(bucket, () => []).add(v.clamp(clampMin, clampMax));
+    }
+
+    if (buckets.isEmpty) return [];
+
+    // 4. Build sorted averaged spots
+    final keys = buckets.keys.toList()..sort();
+    return keys.map((k) {
+      final avg = buckets[k]!.reduce((a, b) => a + b) / buckets[k]!.length;
+      return FlSpot(k.toDouble(), avg);
+    }).toList();
   }
 
-  /// X axis label formatter — uses actual DateTime for readability
+  /// Build brightness spots (0–100%).
+  List<FlSpot> _buildBrightnessSpots(List feeds) => _buildSpots(
+        feeds,
+        (f) => f.getFieldAsDouble('brightness'),
+        range: _selectedTimeRange,
+        clampMin: 0.0,
+        clampMax: 100.0,
+      );
+
+  /// Build ambient-light spots (lux, unbounded above).
+  List<FlSpot> _buildAmbientLightSpots(List feeds) => _buildSpots(
+        feeds,
+        (f) => f.getFieldAsDouble('ambient_light'),
+        range: _selectedTimeRange,
+        clampMin: 0.0,
+      );
+
+  /// X axis label — real clock time or day name for week.
   String _formatXLabel(double x, double maxX, String range) {
-    final dateTime = DateTime.fromMillisecondsSinceEpoch(x.toInt());
-    if (range == 'week') {
-      // Show abbreviated day name (Sun, Mon, …, Sat)
-      return DateFormat('E').format(dateTime);
-    }
-    // hour & day: show HH:mm
-    return DateFormat('HH:mm').format(dateTime);
+    final dt = DateTime.fromMillisecondsSinceEpoch(x.toInt());
+    if (range == 'week') return DateFormat('E').format(dt);  // Mon, Tue …
+    return DateFormat('HH:mm').format(dt);
   }
 
-  /// X axis interval in milliseconds by range
+  /// X axis tick interval in ms, chosen so we get ~6–7 ticks regardless
+  /// of how much data is in the range.
   double _xInterval(String range) {
-    if (range == 'hour') return 10 * 60 * 1000.0;       // every 10 min
-    if (range == 'week') return 24 * 60 * 60 * 1000.0;  // every day
-    return 4 * 60 * 60 * 1000.0;                         // every 4 h (day)
+    // Target exactly 6 ticks across the visible window
+    if (range == 'hour') return 10 * 60 * 1000.0;       // 6 × 10 min = 1 h
+    if (range == 'week') return 24 * 60 * 60 * 1000.0;  // 7 × 1 day  = 1 wk
+    return 4 * 60 * 60 * 1000.0;                         // 6 × 4 h   = 24 h
   }
 
   /// Dynamic chart title
@@ -848,9 +892,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
 /// Presence Activity Timeline Widget
 ///
-/// Shows a compact horizontal timeline strip where filled segments
-/// indicate presence-detected intervals. This gives a lay user an
-/// intuitive at-a-glance view of when the room was occupied.
+/// Horizontal timeline strip: GREEN = presence detected, GREY = no presence.
+/// Segments are proportional to how long each state lasted.
 class _PresenceTimeline extends StatelessWidget {
   final List feeds;
   final bool isDark;
@@ -861,10 +904,24 @@ class _PresenceTimeline extends StatelessWidget {
   Widget build(BuildContext context) {
     if (feeds.isEmpty) return const SizedBox.shrink();
 
-    final firstTs = feeds.first.createdAt.millisecondsSinceEpoch;
-    final lastTs = feeds.last.createdAt.millisecondsSinceEpoch;
-    final span = (lastTs - firstTs).toDouble();
+    // Sort chronologically and deduplicate
+    final sorted = [...feeds]
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    final Map<int, dynamic> seen = {};
+    for (final f in sorted) {
+      seen[f.createdAt.millisecondsSinceEpoch] = f;
+    }
+    final unique = seen.values.toList()
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+    final firstTs = unique.first.createdAt.millisecondsSinceEpoch;
+    final lastTs  = unique.last.createdAt.millisecondsSinceEpoch;
+    final span    = (lastTs - firstTs).toDouble();
     if (span <= 0) return const SizedBox.shrink();
+
+    // Explicit grey so it's visible on both light and dark themes
+    final emptyColor  = isDark ? Colors.grey.shade800 : Colors.grey.shade300;
+    final presentColor = AppColors.success.withValues(alpha: 0.85);
 
     return Card(
       elevation: 2,
@@ -876,68 +933,82 @@ class _PresenceTimeline extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Presence Activity',
-              style: AppTextStyles.headline3.copyWith(
-                color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-              ),
-            ),
-            Text(
-              'Green = someone present, grey = empty room',
-              style: AppTextStyles.bodySmall.copyWith(
-                color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-              ),
+            Row(
+              children: [
+                // Legend dots
+                Container(width: 10, height: 10,
+                  decoration: BoxDecoration(color: presentColor, shape: BoxShape.circle)),
+                const SizedBox(width: 4),
+                Text('Present',
+                  style: AppTextStyles.caption.copyWith(
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary)),
+                const SizedBox(width: 12),
+                Container(width: 10, height: 10,
+                  decoration: BoxDecoration(color: emptyColor, shape: BoxShape.circle)),
+                const SizedBox(width: 4),
+                Text('Empty',
+                  style: AppTextStyles.caption.copyWith(
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary)),
+                const Spacer(),
+                Text('Presence Activity',
+                  style: AppTextStyles.headline3.copyWith(
+                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                  )),
+              ],
             ),
             const SizedBox(height: AppSpacing.md),
+            // ── Timeline bar ──
             ClipRRect(
-              borderRadius: BorderRadius.circular(AppBorderRadius.sm),
+              borderRadius: BorderRadius.circular(6),
               child: SizedBox(
-                height: 28,
+                height: 32,
                 child: LayoutBuilder(
                   builder: (ctx, constraints) {
-                    final totalWidth = constraints.maxWidth;
-                    return Stack(
+                    final W = constraints.maxWidth;
+                    return Row(
                       children: [
-                        // Background
-                        Container(
-                          width: totalWidth,
-                          height: 28,
-                          color: isDark
-                              ? AppColors.darkCardBackground
-                              : AppColors.cardBackground,
+                        for (int i = 0; i < unique.length - 1; i++)
+                          Builder(builder: (_) {
+                            final tStart = unique[i].createdAt.millisecondsSinceEpoch;
+                            final tEnd   = unique[i + 1].createdAt.millisecondsSinceEpoch;
+                            final frac   = (tEnd - tStart) / span;
+                            final w      = (frac * W).clamp(0.5, W);
+                            final present = unique[i].getFieldAsBool('presence');
+                            return Container(
+                              width: w,
+                              height: 32,
+                              color: present ? presentColor : emptyColor,
+                            );
+                          }),
+                        // Fill the last point's color to the end
+                        Expanded(
+                          child: Container(
+                            height: 32,
+                            color: unique.last.getFieldAsBool('presence')
+                                ? presentColor
+                                : emptyColor,
+                          ),
                         ),
-                        // Presence segments
-                        for (int i = 0; i < feeds.length - 1; i++)
-                          if (feeds[i].getFieldAsBool('presence'))
-                            Positioned(
-                              left: ((feeds[i].createdAt.millisecondsSinceEpoch - firstTs) / span) * totalWidth,
-                              width: ((feeds[i + 1].createdAt.millisecondsSinceEpoch - feeds[i].createdAt.millisecondsSinceEpoch) / span) * totalWidth + 1,
-                              top: 0,
-                              bottom: 0,
-                              child: Container(
-                                color: AppColors.success.withValues(alpha: 0.75),
-                              ),
-                            ),
                       ],
                     );
                   },
                 ),
               ),
             ),
-            const SizedBox(height: AppSpacing.sm),
-            // Time labels: start and end
+            const SizedBox(height: AppSpacing.xs),
+            // Start / end time labels
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  DateFormat('HH:mm').format(feeds.first.createdAt),
+                  DateFormat('HH:mm').format(unique.first.createdAt),
                   style: AppTextStyles.caption.copyWith(
                     fontSize: 9,
                     color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                   ),
                 ),
                 Text(
-                  DateFormat('HH:mm').format(feeds.last.createdAt),
+                  DateFormat('HH:mm').format(unique.last.createdAt),
                   style: AppTextStyles.caption.copyWith(
                     fontSize: 9,
                     color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
