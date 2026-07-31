@@ -539,17 +539,14 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   ),
                    const SizedBox(height: AppSpacing.lg),
 
-                   // Ambient Light Over Time
+                   // Ambient Light Over Time — Bar Chart
                    if (feeds.isNotEmpty)
                      Builder(builder: (context) {
                        final ambSpots = _buildAmbientLightSpots(feeds);
                        if (ambSpots.isEmpty) return const SizedBox.shrink();
-                       double maxAmbX = ambSpots.last.x;
-                       final minAmbX = ambSpots.first.x;
-                       if (maxAmbX == minAmbX) maxAmbX += 1.0;
                        final maxAmbY = ambSpots.map((s) => s.y).reduce((a, b) => a > b ? a : b);
                        final yMax = maxAmbY < 10 ? 10.0 : (maxAmbY * 1.2);
-                       final xIntvl = _xInterval(_selectedTimeRange);
+                       final barWidth = ambSpots.length < 20 ? 14.0 : 6.0;
                        return Card(
                          elevation: 2,
                          shape: RoundedRectangleBorder(
@@ -567,44 +564,81 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                  ),
                                ),
                                Text(
-                                 'How bright the room was over time',
+                                 'Average room brightness per time slot',
                                  style: AppTextStyles.bodySmall.copyWith(
                                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                                  ),
                                ),
                                const SizedBox(height: AppSpacing.lg),
                                SizedBox(
-                                 height: 200,
-                                 child: LineChart(
-                                   LineChartData(
-                                     gridData: FlGridData(
-                                       show: true,
-                                       drawVerticalLine: false,
-                                       getDrawingHorizontalLine: (_) => FlLine(
-                                         color: isDark ? Colors.white10 : Colors.black12,
-                                         strokeWidth: 1,
+                                 height: 210,
+                                 child: BarChart(
+                                   BarChartData(
+                                     alignment: BarChartAlignment.spaceAround,
+                                     maxY: yMax,
+                                     minY: 0,
+                                     barTouchData: BarTouchData(
+                                       touchTooltipData: BarTouchTooltipData(
+                                         getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                                           if (groupIndex >= ambSpots.length) return null;
+                                           final dt = DateTime.fromMillisecondsSinceEpoch(
+                                             ambSpots[groupIndex].x.toInt(),
+                                           );
+                                           final label = _selectedTimeRange == 'week'
+                                               ? DateFormat('E').format(dt)
+                                               : DateFormat('HH:mm').format(dt);
+                                           return BarTooltipItem(
+                                             '$label\n${rod.toY.toStringAsFixed(1)} lux',
+                                             const TextStyle(
+                                               color: Colors.white,
+                                               fontSize: 11,
+                                               fontWeight: FontWeight.w600,
+                                             ),
+                                           );
+                                         },
                                        ),
                                      ),
                                      titlesData: FlTitlesData(
-                                       rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                                       topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                       rightTitles: const AxisTitles(
+                                         sideTitles: SideTitles(showTitles: false),
+                                       ),
+                                       topTitles: const AxisTitles(
+                                         sideTitles: SideTitles(showTitles: false),
+                                       ),
                                        bottomTitles: AxisTitles(
                                          sideTitles: SideTitles(
                                            showTitles: true,
-                                           interval: xIntvl,
                                            reservedSize: 42,
                                            getTitlesWidget: (value, meta) {
-                                             if (value == meta.min || value == meta.max) return const SizedBox.shrink();
-                                             final dt = DateTime.fromMillisecondsSinceEpoch(value.toInt());
+                                             final idx = value.toInt();
+                                             if (idx < 0 || idx >= ambSpots.length) {
+                                               return const SizedBox.shrink();
+                                             }
+                                             // Show ~6 evenly spaced labels
+                                             final step = (ambSpots.length / 6)
+                                                 .ceil()
+                                                 .clamp(1, ambSpots.length);
+                                             if (idx % step != 0 &&
+                                                 idx != ambSpots.length - 1) {
+                                               return const SizedBox.shrink();
+                                             }
+                                             final dt = DateTime.fromMillisecondsSinceEpoch(
+                                               ambSpots[idx].x.toInt(),
+                                             );
+                                             final label = _selectedTimeRange == 'week'
+                                                 ? DateFormat('E').format(dt)
+                                                 : DateFormat('HH:mm').format(dt);
                                              return SideTitleWidget(
                                                axisSide: meta.axisSide,
                                                angle: -0.7,
                                                space: 4,
                                                child: Text(
-                                                 DateFormat('HH:mm').format(dt),
+                                                 label,
                                                  style: AppTextStyles.caption.copyWith(
                                                    fontSize: 9,
-                                                   color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                                                   color: isDark
+                                                       ? AppColors.darkTextSecondary
+                                                       : AppColors.textSecondary,
                                                  ),
                                                ),
                                              );
@@ -616,46 +650,51 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                            showTitles: true,
                                            reservedSize: 44,
                                            getTitlesWidget: (value, meta) {
+                                             if (value == meta.max) return const SizedBox.shrink();
                                              return Text(
                                                '${value.toInt()}lx',
                                                style: AppTextStyles.caption.copyWith(
                                                  fontSize: 9,
-                                                 color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                                                 color: isDark
+                                                     ? AppColors.darkTextSecondary
+                                                     : AppColors.textSecondary,
                                                ),
                                              );
                                            },
                                          ),
                                        ),
                                      ),
-                                     borderData: FlBorderData(show: false),
-                                     lineBarsData: [
-                                       LineChartBarData(
-                                         spots: ambSpots,
-                                         isCurved: true,
-                                         color: AppColors.warning,
-                                         barWidth: 2.5,
-                                         dotData: const FlDotData(show: false),
-                                         belowBarData: BarAreaData(
-                                           show: true,
-                                           color: AppColors.warning.withValues(alpha: 0.12),
-                                         ),
-                                       ),
-                                     ],
-                                     minX: minAmbX,
-                                     maxX: maxAmbX,
-                                     minY: 0,
-                                     maxY: yMax,
-                                     lineTouchData: LineTouchData(
-                                       touchTooltipData: LineTouchTooltipData(
-                                         getTooltipItems: (spots) => spots.map((s) {
-                                           final dt = DateTime.fromMillisecondsSinceEpoch(s.x.toInt());
-                                           return LineTooltipItem(
-                                             '${DateFormat('HH:mm').format(dt)}\n${s.y.toStringAsFixed(1)} lux',
-                                             const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
-                                           );
-                                         }).toList(),
+                                     gridData: FlGridData(
+                                       show: true,
+                                       drawVerticalLine: false,
+                                       getDrawingHorizontalLine: (_) => FlLine(
+                                         color: isDark ? Colors.white10 : Colors.black12,
+                                         strokeWidth: 1,
                                        ),
                                      ),
+                                     borderData: FlBorderData(show: false),
+                                     barGroups: ambSpots.asMap().entries.map((e) {
+                                       return BarChartGroupData(
+                                         x: e.key,
+                                         barRods: [
+                                           BarChartRodData(
+                                             toY: e.value.y,
+                                             color: AppColors.warning,
+                                             width: barWidth,
+                                             borderRadius: const BorderRadius.vertical(
+                                               top: Radius.circular(4),
+                                             ),
+                                             backDrawRodData: BackgroundBarChartRodData(
+                                               show: true,
+                                               toY: yMax,
+                                               color: isDark
+                                                   ? Colors.white.withValues(alpha: 0.04)
+                                                   : Colors.black.withValues(alpha: 0.03),
+                                             ),
+                                           ),
+                                         ],
+                                       );
+                                     }).toList(),
                                    ),
                                  ),
                                ),
@@ -664,6 +703,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                          ),
                        );
                      }),
+
                    const SizedBox(height: AppSpacing.lg),
 
                    // Presence Activity Timeline
