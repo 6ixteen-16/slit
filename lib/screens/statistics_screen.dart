@@ -398,7 +398,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                               final spotData = _buildBrightnessSpots(feeds);
                               final spots = spotData.spots;
                               final timestamps = spotData.timestamps;
-                              final maxX = spots.length.toDouble() - 1;
+                              final maxX = (spots.length - 1).clamp(0.0, double.infinity).toDouble();
+                              final minX = 0.0;
                               return LineChart(
                                 LineChartData(
                                   gridData: FlGridData(
@@ -910,10 +911,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     return 'X axis: actual time';
   }
 
-  String _xAxisLabel(String range) {
-    if (range == 'week') return 'Day';
-    return 'Time';
-  }
+
 
 
 }
