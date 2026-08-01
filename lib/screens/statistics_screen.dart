@@ -402,7 +402,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                               final spots = spotData.spots;
                               final timestamps = spotData.timestamps;
                               final maxX = (spots.length - 1).clamp(0.0, double.infinity).toDouble();
-                              final minX = 0.0;
+                              const minX = 0.0;
                               return LineChart(
                                 LineChartData(
                                   gridData: FlGridData(
@@ -434,7 +434,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                       sideTitles: SideTitles(
                                         showTitles: true,
                                         reservedSize: 42,
-                                        interval: 1, // Force every index to be evaluated
+                                        interval: 1,
                                         getTitlesWidget: (value, meta) {
                                           final idx = value.toInt();
                                           if (idx < 0 || idx >= spots.length) {
@@ -615,7 +615,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                          sideTitles: SideTitles(
                                            showTitles: true,
                                            reservedSize: 42,
-                                           interval: 1, // Force every index to be evaluated
+                                           interval: 1,
                                            getTitlesWidget: (value, meta) {
                                              final idx = value.toInt();
                                              if (idx < 0 || idx >= ambSpots.length) {
@@ -907,4 +907,263 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
 
+
+
+}
+
+/// Legend Item
+///
+/// Internal widget for chart legend items.
+class _LegendItem extends StatelessWidget {
+  final Color color;
+  final String label;
+  final String value;
+
+  const _LegendItem({
+    required this.color,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Row(
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: Text(
+            label,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.textSecondary,
+            ),
+          ),
+        ),
+        Text(
+          value,
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Stat Card
+///
+/// Internal widget for statistics cards with progress indicators.
+class _StatCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+  final double progress;
+  final double maxProgress;
+  final bool showProgress;
+
+  const _StatCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.progress,
+    required this.maxProgress,
+    this.showProgress = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final progressValue =
+        showProgress ? (progress / maxProgress).clamp(0.0, 1.0) : 0.0;
+
+    // In light mode use accent so the small badge is clearly legible
+    final badgeColor = !isDark && color == AppColors.accent
+        ? AppColors.secondary
+        : color;
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppBorderRadius.md),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  icon,
+                  color: color,
+                  size: 24,
+                ),
+                const Spacer(),
+                if (showProgress)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.sm,
+                      vertical: AppSpacing.xs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: badgeColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(
+                        AppBorderRadius.sm,
+                      ),
+                    ),
+                    child: Text(
+                      '${(progressValue * 100).toInt()}%',
+                      style: AppTextStyles.caption.copyWith(
+                        color: badgeColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              label,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              value,
+              style: AppTextStyles.headline3.copyWith(
+                color:
+                    isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            if (showProgress) ...[
+              const SizedBox(height: AppSpacing.sm),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppBorderRadius.sm),
+                child: LinearProgressIndicator(
+                  value: progressValue,
+                  backgroundColor: isDark
+                      ? AppColors.darkCardBackground
+                      : AppColors.cardBackground,
+                  valueColor: AlwaysStoppedAnimation<Color>(color),
+                  minHeight: 4,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Summary Row
+///
+/// Internal widget for summary information rows.
+class _SummaryRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _SummaryRow({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.textSecondary,
+            ),
+          ),
+          Text(
+            value,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Time Range Chip
+///
+/// Internal widget for time range selection chips.
+class _TimeRangeChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _TimeRangeChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
+        decoration: BoxDecoration(
+          color: selected
+              ? (isDark ? AppColors.secondary : AppColors.primary)
+              : (isDark
+                  ? AppColors.primary
+                  : AppColors.cardBackground),
+          borderRadius: BorderRadius.circular(AppBorderRadius.md),
+          border: Border.all(
+            color: selected
+                ? Colors.transparent
+                : (isDark ? AppColors.primaryLight : AppColors.textSecondary.withValues(alpha: 0.3)),
+          ),
+        ),
+        child: Text(
+          label,
+          style: AppTextStyles.bodySmall.copyWith(
+            color: selected
+                ? (isDark ? AppColors.primaryDark : Colors.white)
+                : (isDark ? Colors.white : AppColors.textSecondary),
+            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+      ),
+    );
+  }
 }
