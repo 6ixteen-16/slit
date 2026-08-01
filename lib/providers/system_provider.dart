@@ -790,21 +790,26 @@ class SystemProvider with ChangeNotifier {
     final presenceCount =
         feeds.where((f) => f.getFieldAsBool('presence')).length;
 
-    // Fields 6-8 are cumulative seconds supplied by the ESP32.
-    // Calculate the difference between the most recent and earliest feed
-    // in the requested time range.
-    final latest = feeds.last;
-    final earliest = feeds.first;
-    
-    int activeTime = latest.getFieldAsInt('active_time') - earliest.getFieldAsInt('active_time');
-    int idleTime = latest.getFieldAsInt('idle_time') - earliest.getFieldAsInt('idle_time');
-    int sleepTime = latest.getFieldAsInt('sleep_time') - earliest.getFieldAsInt('sleep_time');
-    
-    // Prevent negative values if ESP32 restarted during the period
-    if (activeTime < 0) activeTime = latest.getFieldAsInt('active_time');
-    if (idleTime < 0) idleTime = latest.getFieldAsInt('idle_time');
-    if (sleepTime < 0) sleepTime = latest.getFieldAsInt('sleep_time');
-    
+    int activeTime = 0;
+    int idleTime = 0;
+    int sleepTime = 0;
+
+    // Accumulate positive deltas to prevent massive spikes if data is missing or ESP32 restarts
+    for (int i = 1; i < feeds.length; i++) {
+      final prev = feeds[i - 1];
+      final curr = feeds[i];
+      
+      final dActive = curr.getFieldAsInt('active_time') - prev.getFieldAsInt('active_time');
+      final dIdle = curr.getFieldAsInt('idle_time') - prev.getFieldAsInt('idle_time');
+      final dSleep = curr.getFieldAsInt('sleep_time') - prev.getFieldAsInt('sleep_time');
+      
+      // If delta is positive and reasonable (< 1 hour gap), add it.
+      // This automatically rejects massive spikes from null prev values (which default to 0).
+      if (dActive > 0 && dActive < 3600) activeTime += dActive;
+      if (dIdle > 0 && dIdle < 3600) idleTime += dIdle;
+      if (dSleep > 0 && dSleep < 3600) sleepTime += dSleep;
+    }
+
     final energySavingTime = sleepTime + idleTime;
 
     return {

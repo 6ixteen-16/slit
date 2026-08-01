@@ -206,42 +206,45 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                               child: PieChart(
                                 PieChartData(
                                   sections: [
-                                    PieChartSectionData(
-                                      value: (stats['active_time'] as num?)
-                                              ?.toDouble() ??
-                                          0.0,
-                                      title: 'Active',
-                                      color: AppColors.success,
-                                      radius: 50,
-                                      titleStyle: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    PieChartSectionData(
-                                      value: (stats['idle_time'] as num?)
-                                              ?.toDouble() ??
-                                          0.0,
-                                      title: 'Idle',
-                                      color: AppColors.warning,
-                                      radius: 50,
-                                      titleStyle: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    PieChartSectionData(
-                                      value: (stats['sleep_time'] as num?)
-                                              ?.toDouble() ??
-                                          0.0,
-                                      title: 'Sleep',
-                                      color: AppColors.secondary,
-                                      radius: 50,
-                                      titleStyle: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
+                                      if (((stats['active_time'] as num?)?.toDouble() ?? 0.0) > 0)
+                                        PieChartSectionData(
+                                          value: (stats['active_time'] as num?)
+                                                  ?.toDouble() ??
+                                              0.0,
+                                          title: 'Active',
+                                          color: AppColors.success,
+                                          radius: 50,
+                                          titleStyle: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      if (((stats['idle_time'] as num?)?.toDouble() ?? 0.0) > 0)
+                                        PieChartSectionData(
+                                          value: (stats['idle_time'] as num?)
+                                                  ?.toDouble() ??
+                                              0.0,
+                                          title: 'Idle',
+                                          color: AppColors.warning,
+                                          radius: 50,
+                                          titleStyle: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      if (((stats['sleep_time'] as num?)?.toDouble() ?? 0.0) > 0)
+                                        PieChartSectionData(
+                                          value: (stats['sleep_time'] as num?)
+                                                  ?.toDouble() ??
+                                              0.0,
+                                          title: 'Sleep',
+                                          color: AppColors.secondary,
+                                          radius: 50,
+                                          titleStyle: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                                   ],
                                   sectionsSpace: 2,
                                   centerSpaceRadius: 40,
@@ -431,6 +434,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                       sideTitles: SideTitles(
                                         showTitles: true,
                                         reservedSize: 42,
+                                        interval: 1, // Force every index to be evaluated
                                         getTitlesWidget: (value, meta) {
                                           final idx = value.toInt();
                                           if (idx < 0 || idx >= spots.length) {
@@ -438,7 +442,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                           }
                                           // Show ~6 evenly spaced labels
                                           final step = (spots.length / 6).ceil().clamp(1, spots.length);
-                                          if (idx % step != 0 && idx != spots.length - 1) {
+                                          if (idx % step != 0) {
                                             return const SizedBox.shrink();
                                           }
                                           final dt = timestamps[idx];
@@ -611,6 +615,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                          sideTitles: SideTitles(
                                            showTitles: true,
                                            reservedSize: 42,
+                                           interval: 1, // Force every index to be evaluated
                                            getTitlesWidget: (value, meta) {
                                              final idx = value.toInt();
                                              if (idx < 0 || idx >= ambSpots.length) {
@@ -620,8 +625,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                              final step = (ambSpots.length / 6)
                                                  .ceil()
                                                  .clamp(1, ambSpots.length);
-                                             if (idx % step != 0 &&
-                                                 idx != ambSpots.length - 1) {
+                                             if (idx % step != 0) {
                                                return const SizedBox.shrink();
                                              }
                                              final dt = ambTimestamps[idx];
@@ -704,16 +708,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                        );
                      }),
 
-                   const SizedBox(height: AppSpacing.lg),
-
-                   // Presence Activity Timeline
-                   if (feeds.isNotEmpty)
-                     _PresenceTimeline(
-                       feeds: feeds,
-                       isDark: isDark,
-                     ),
-                   if (feeds.isNotEmpty)
-                     const SizedBox(height: AppSpacing.lg),
+                   // Presence Activity Timeline (Removed per user request)
 
                   // Summary Card - dynamic with time range
                   Builder(builder: (context) {
@@ -912,396 +907,4 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
 
-
-
-}
-
-/// Presence Activity Timeline Widget
-///
-/// Horizontal timeline strip: GREEN = presence detected, GREY = no presence.
-/// Segments are proportional to how long each state lasted.
-class _PresenceTimeline extends StatelessWidget {
-  final List feeds;
-  final bool isDark;
-
-  const _PresenceTimeline({required this.feeds, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    if (feeds.isEmpty) return const SizedBox.shrink();
-
-    // Sort chronologically and deduplicate
-    final sorted = [...feeds]
-      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
-    final Map<int, dynamic> seen = {};
-    for (final f in sorted) {
-      seen[f.createdAt.millisecondsSinceEpoch] = f;
-    }
-    final unique = seen.values.toList()
-      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
-
-    final firstTs = unique.first.createdAt.millisecondsSinceEpoch;
-    final lastTs  = unique.last.createdAt.millisecondsSinceEpoch;
-    final span    = (lastTs - firstTs).toDouble();
-    if (span <= 0) return const SizedBox.shrink();
-
-    // Explicit grey so it's visible on both light and dark themes
-    final emptyColor  = isDark ? Colors.grey.shade800 : Colors.grey.shade300;
-    final presentColor = AppColors.success.withValues(alpha: 0.85);
-
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppBorderRadius.md),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                // Legend dots
-                Container(width: 10, height: 10,
-                  decoration: BoxDecoration(color: presentColor, shape: BoxShape.circle)),
-                const SizedBox(width: 4),
-                Text('Present',
-                  style: AppTextStyles.caption.copyWith(
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary)),
-                const SizedBox(width: 12),
-                Container(width: 10, height: 10,
-                  decoration: BoxDecoration(color: emptyColor, shape: BoxShape.circle)),
-                const SizedBox(width: 4),
-                Text('Empty',
-                  style: AppTextStyles.caption.copyWith(
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary)),
-                const Spacer(),
-                Text('Presence Activity',
-                  style: AppTextStyles.headline3.copyWith(
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                  )),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-            // ── Timeline bar ──
-            ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: SizedBox(
-                height: 32,
-                child: LayoutBuilder(
-                  builder: (ctx, constraints) {
-                    final W = constraints.maxWidth;
-                    return Row(
-                      children: [
-                        for (int i = 0; i < unique.length - 1; i++)
-                          Builder(builder: (_) {
-                            final tStart = unique[i].createdAt.millisecondsSinceEpoch;
-                            final tEnd   = unique[i + 1].createdAt.millisecondsSinceEpoch;
-                            final frac   = (tEnd - tStart) / span;
-                            final w      = (frac * W).clamp(0.5, W);
-                            final present = unique[i].getFieldAsBool('presence');
-                            return Container(
-                              width: w,
-                              height: 32,
-                              color: present ? presentColor : emptyColor,
-                            );
-                          }),
-                        // Fill the last point's color to the end
-                        Expanded(
-                          child: Container(
-                            height: 32,
-                            color: unique.last.getFieldAsBool('presence')
-                                ? presentColor
-                                : emptyColor,
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            // Start / end time labels
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  DateFormat('HH:mm').format(unique.first.createdAt),
-                  style: AppTextStyles.caption.copyWith(
-                    fontSize: 9,
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-                  ),
-                ),
-                Text(
-                  DateFormat('HH:mm').format(unique.last.createdAt),
-                  style: AppTextStyles.caption.copyWith(
-                    fontSize: 9,
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Legend Item
-///
-/// Internal widget for chart legend items.
-class _LegendItem extends StatelessWidget {
-  final Color color;
-  final String label;
-  final String value;
-
-  const _LegendItem({
-    required this.color,
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Row(
-      children: [
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: Text(
-            label,
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.textSecondary,
-            ),
-          ),
-        ),
-        Text(
-          value,
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Stat Card
-///
-/// Internal widget for statistics cards with progress indicators.
-class _StatCard extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color color;
-  final double progress;
-  final double maxProgress;
-  final bool showProgress;
-
-  const _StatCard({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.color,
-    required this.progress,
-    required this.maxProgress,
-    this.showProgress = true,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final progressValue =
-        showProgress ? (progress / maxProgress).clamp(0.0, 1.0) : 0.0;
-
-    // In light mode use accent so the small badge is clearly legible
-    final badgeColor = !isDark && color == AppColors.accent
-        ? AppColors.secondary
-        : color;
-
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppBorderRadius.md),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  icon,
-                  color: color,
-                  size: 24,
-                ),
-                const Spacer(),
-                if (showProgress)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.sm,
-                      vertical: AppSpacing.xs,
-                    ),
-                    decoration: BoxDecoration(
-                      color: badgeColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(
-                        AppBorderRadius.sm,
-                      ),
-                    ),
-                    child: Text(
-                      '${(progressValue * 100).toInt()}%',
-                      style: AppTextStyles.caption.copyWith(
-                        color: badgeColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              label,
-              style: AppTextStyles.bodySmall.copyWith(
-                color: isDark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              value,
-              style: AppTextStyles.headline3.copyWith(
-                color:
-                    isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            if (showProgress) ...[
-              const SizedBox(height: AppSpacing.sm),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(AppBorderRadius.sm),
-                child: LinearProgressIndicator(
-                  value: progressValue,
-                  backgroundColor: isDark
-                      ? AppColors.darkCardBackground
-                      : AppColors.cardBackground,
-                  valueColor: AlwaysStoppedAnimation<Color>(color),
-                  minHeight: 4,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Summary Row
-///
-/// Internal widget for summary information rows.
-class _SummaryRow extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _SummaryRow({
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.textSecondary,
-            ),
-          ),
-          Text(
-            value,
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Time Range Chip
-///
-/// Internal widget for time range selection chips.
-class _TimeRangeChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _TimeRangeChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.sm,
-        ),
-        decoration: BoxDecoration(
-          color: selected
-              ? (isDark ? AppColors.secondary : AppColors.primary)
-              : (isDark
-                  ? AppColors.primary
-                  : AppColors.cardBackground),
-          borderRadius: BorderRadius.circular(AppBorderRadius.md),
-          border: Border.all(
-            color: selected
-                ? Colors.transparent
-                : (isDark ? AppColors.primaryLight : AppColors.textSecondary.withValues(alpha: 0.3)),
-          ),
-        ),
-        child: Text(
-          label,
-          style: AppTextStyles.bodySmall.copyWith(
-            color: selected
-                ? (isDark ? AppColors.primaryDark : Colors.white)
-                : (isDark ? Colors.white : AppColors.textSecondary),
-            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-      ),
-    );
-  }
 }

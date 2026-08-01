@@ -151,6 +151,9 @@ class _DashboardContentState extends State<_DashboardContent> {
 
   @override
   Widget build(BuildContext context) {
+    // Ensure keyboard is dismissed when returning to the dashboard
+    FocusManager.instance.primaryFocus?.unfocus();
+    
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
