@@ -226,6 +226,7 @@ class DefaultSettings {
   static const int dimLevel3Timeout = 60;
   static const int sleepTimeout = 120;
   static const int fadeSpeed = 5;
+  static const int blinkDuration = 5;
 }
 
 /// Operating Modes

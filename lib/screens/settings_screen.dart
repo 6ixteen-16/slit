@@ -323,6 +323,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   },
                   keyboardType: TextInputType.number,
                 ),
+                _SettingsTextField(
+                  label: 'Blink Duration',
+                  hintText: '1 - 60 seconds',
+                  value: _currentSettings.blinkDuration.toString(),
+                  onChanged: (value) {
+                    final intValue = int.tryParse(value);
+                    if (intValue != null) {
+                      setState(() {
+                        _currentSettings = _currentSettings.copyWith(
+                          blinkDuration: intValue,
+                        );
+                      });
+                    }
+                  },
+                  keyboardType: TextInputType.number,
+                ),
                 const SizedBox(height: AppSpacing.md),
               ],
             ),

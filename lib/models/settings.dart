@@ -28,6 +28,7 @@ class Settings {
   final int dimLevel3Timeout;
   final int sleepTimeout;
   final int fadeSpeed;
+  final int blinkDuration;
 
   /// Constructor
   ///
@@ -49,6 +50,7 @@ class Settings {
     required this.dimLevel3Timeout,
     required this.sleepTimeout,
     required this.fadeSpeed,
+    required this.blinkDuration,
   });
 
   /// Factory constructor for creating Settings from JSON
@@ -89,6 +91,7 @@ class Settings {
       sleepTimeout:
           json['sleep_timeout'] as int? ?? DefaultSettings.sleepTimeout,
       fadeSpeed: json['fade_speed'] as int? ?? DefaultSettings.fadeSpeed,
+      blinkDuration: json['blink_duration'] as int? ?? DefaultSettings.blinkDuration,
     );
   }
 
@@ -108,6 +111,7 @@ class Settings {
       'timeBeforeDim3Ms': dimLevel3Timeout * 1000,
       'timeBeforeOffMs': sleepTimeout * 1000,
       'fadeSpeed': fadeSpeed,
+      'blinkTimeMs': blinkDuration * 1000,
     };
   }
 
@@ -134,6 +138,7 @@ class Settings {
     int? dimLevel3Timeout,
     int? sleepTimeout,
     int? fadeSpeed,
+    int? blinkDuration,
   }) {
     return Settings(
       darkThreshold: darkThreshold ?? this.darkThreshold,
@@ -143,6 +148,7 @@ class Settings {
       dimLevel3Timeout: dimLevel3Timeout ?? this.dimLevel3Timeout,
       sleepTimeout: sleepTimeout ?? this.sleepTimeout,
       fadeSpeed: fadeSpeed ?? this.fadeSpeed,
+      blinkDuration: blinkDuration ?? this.blinkDuration,
     );
   }
 
@@ -160,6 +166,7 @@ class Settings {
       dimLevel3Timeout: DefaultSettings.dimLevel3Timeout,
       sleepTimeout: DefaultSettings.sleepTimeout,
       fadeSpeed: DefaultSettings.fadeSpeed,
+      blinkDuration: DefaultSettings.blinkDuration,
     );
   }
 
@@ -186,7 +193,9 @@ class Settings {
         sleepTimeout <= 86400 &&
         sleepTimeout > dimLevel3Timeout &&
         fadeSpeed >= 1 &&
-        fadeSpeed <= 100;
+        fadeSpeed <= 100 &&
+        blinkDuration >= 1 &&
+        blinkDuration <= 60;
   }
 
   /// Get dim level 1 timeout in minutes
@@ -215,7 +224,7 @@ class Settings {
     return 'Settings(darkThreshold: $darkThreshold, brightThreshold: $brightThreshold, '
         'dimLevel1Timeout: $dimLevel1Timeout, dimLevel2Timeout: $dimLevel2Timeout, '
         'dimLevel3Timeout: $dimLevel3Timeout, sleepTimeout: $sleepTimeout, '
-        'fadeSpeed: $fadeSpeed)';
+        'fadeSpeed: $fadeSpeed, blinkDuration: $blinkDuration)';
   }
 
   @override
@@ -229,7 +238,8 @@ class Settings {
         other.dimLevel2Timeout == dimLevel2Timeout &&
         other.dimLevel3Timeout == dimLevel3Timeout &&
         other.sleepTimeout == sleepTimeout &&
-        other.fadeSpeed == fadeSpeed;
+        other.fadeSpeed == fadeSpeed &&
+        other.blinkDuration == blinkDuration;
   }
 
   @override
@@ -240,6 +250,7 @@ class Settings {
         dimLevel2Timeout.hashCode ^
         dimLevel3Timeout.hashCode ^
         sleepTimeout.hashCode ^
-        fadeSpeed.hashCode;
+        fadeSpeed.hashCode ^
+        blinkDuration.hashCode;
   }
 }
